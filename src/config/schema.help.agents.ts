@@ -5,7 +5,7 @@ export const AGENT_FIELD_HELP: Record<string, string> = {
   "ui.tui":
     "Terminal UI presentation settings. Use this for terminal-only options that do not change Gateway or other UI behavior.",
   "ui.tui.screenReader":
-    "Enable screen reader friendly Terminal UI output. The --screen-reader flag and OPENCLAW_SCREEN_READER env var (1/true/yes/on) take precedence over this setting. Default: false.",
+    "Enable screen reader friendly Terminal UI output. The --screen-reader flag enables it regardless of this setting. Default: false.",
   "ui.prefs.accent":
     "Control UI accent: #RRGGBB for a custom color, or 'theme' for the selected theme’s palette. Overrides ui.seamColor; clear it to inherit the configured accent color or theme default.",
   "ui.prefs.locale":

@@ -323,10 +323,9 @@ disabled by default inside tmux and GNU Screen. Sixel is not supported.
 ## Screen reader mode
 
 - `--screen-reader` enables screen reader friendly TUI output. The mode is opt-in and resolved once at TUI startup.
-- Precedence: the `--screen-reader` flag, then `OPENCLAW_SCREEN_READER`, then the `ui.tui.screenReader` config boolean, then off by default.
-- `OPENCLAW_SCREEN_READER` counts as enabled for `1`, `true`, `yes`, and `on` (case-insensitive). Any other value falls through to config.
+- Precedence: the `--screen-reader` flag, then the `ui.tui.screenReader` config boolean, then off by default.
 - The mode works in Gateway mode and in local mode, including `openclaw chat` and `openclaw tui --local`.
-- The flag, environment variable, or config value is the single source of truth for TUI accessibility rendering; components never read environment or config directly.
+- The flag or config value is the single source of truth for TUI accessibility rendering; components never read environment or config directly.
 - Example config:
 
 ```json

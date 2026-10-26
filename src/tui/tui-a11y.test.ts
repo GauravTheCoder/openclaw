@@ -11,22 +11,15 @@ describe("resolveTuiA11y", () => {
     expect(resolveTuiA11y({ config: {} as OpenClawConfig })).toEqual({ screenReader: false });
   });
 
-  it("enables from the flag even when env and config are off", () => {
-    expect(resolveTuiA11y({ flag: true, env: "0", config: configOff })).toEqual({
-      screenReader: true,
-    });
-  });
-
-  it.each(["1", "true", "TRUE", "yes", "on"])("enables from env %s", (env) => {
-    expect(resolveTuiA11y({ env, config: configOff })).toEqual({ screenReader: true });
-  });
-
-  it.each(["0", "false", "no", "off", "", "maybe"])("defers to config for env %j", (env) => {
-    expect(resolveTuiA11y({ env, config: configOn })).toEqual({ screenReader: true });
-    expect(resolveTuiA11y({ env, config: configOff })).toEqual({ screenReader: false });
+  it("enables from the flag even when config is off", () => {
+    expect(resolveTuiA11y({ flag: true, config: configOff })).toEqual({ screenReader: true });
   });
 
   it("enables from config alone", () => {
     expect(resolveTuiA11y({ config: configOn })).toEqual({ screenReader: true });
+  });
+
+  it("stays off when the flag is false and config is off", () => {
+    expect(resolveTuiA11y({ flag: false, config: configOff })).toEqual({ screenReader: false });
   });
 });
