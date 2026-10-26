@@ -320,6 +320,19 @@ disabled by default inside tmux and GNU Screen. Sixel is not supported.
 - If your terminal uses a light background and auto-detection is wrong, set `OPENCLAW_THEME=light` before starting `openclaw tui`.
 - To force the original dark palette instead, set `OPENCLAW_THEME=dark`.
 
+## Screen reader mode
+
+- `--screen-reader` enables screen reader friendly TUI output. The mode is opt-in and resolved once at TUI startup.
+- Precedence: the `--screen-reader` flag, then `OPENCLAW_SCREEN_READER`, then the `ui.tui.screenReader` config boolean, then off by default.
+- `OPENCLAW_SCREEN_READER` counts as enabled for `1`, `true`, `yes`, and `on` (case-insensitive). Any other value falls through to config.
+- The mode works in Gateway mode and in local mode, including `openclaw chat` and `openclaw tui --local`.
+- The flag, environment variable, or config value is the single source of truth for TUI accessibility rendering; components never read environment or config directly.
+- Example config:
+
+```json
+{ "ui": { "tui": { "screenReader": true } } }
+```
+
 ## History + streaming
 
 - On connect, the TUI loads the latest history (default 200 messages).
@@ -348,6 +361,7 @@ disabled by default inside tmux and GNU Screen. Sixel is not supported.
 - `--message <text>`: Send an initial message after connecting. If the selected history is unavailable, the TUI reports that the initial message was not sent; it does not replay it automatically after session recovery.
 - `--timeout-ms <ms>`: Agent timeout in ms (defaults to `agents.defaults.timeoutSeconds`)
 - `--history-limit <n>`: History entries to load (default `200`)
+- `--screen-reader`: Enable screen reader friendly output (default off; see [Screen reader mode](#screen-reader-mode))
 
 <Warning>
 When you set `--url`, the TUI does not fall back to config or environment credentials. Pass `--token` or `--password` explicitly, plus `--tls-fingerprint` when the target uses a pinned certificate. Missing explicit credentials is an error. In local mode, do not pass `--url`, `--token`, `--password`, or `--tls-fingerprint`.
