@@ -7,6 +7,7 @@ import {
 
 // Terminal bells that are not OSC/APC terminators.
 function countBells(output: string) {
+  // oxlint-disable-next-line eslint/no-control-regex -- Escape sequences are the thing being matched.
   const OSC_OR_APC = new RegExp("\\u001b[\\]_][^\\u0007\\u001b]*(?:\\u0007|\\u001b\\\\)", "gu");
   return output.replace(OSC_OR_APC, "").split("\x07").length - 1;
 }
