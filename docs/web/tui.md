@@ -325,13 +325,16 @@ disabled by default inside tmux and GNU Screen. Sixel is not supported.
 - `--screen-reader` enables screen reader friendly TUI output. The mode is opt-in and resolved once at TUI startup.
 - Precedence: the `--screen-reader` flag, then the `ui.tui.screenReader` config boolean, then off by default.
 - The mode works in Gateway mode and in local mode, including `openclaw chat` and `openclaw tui --local`.
+- At launch the TUI prints `Screen reader mode on` once, before it draws, so you know the mode is active.
 - The flag or config value is the single source of truth for TUI accessibility rendering; components never read environment or config directly.
 - Status: no spinner and no timers. The status row is static text, and the chat log gets one `System:` line per change (`Working`, `Status: streaming`, `Done in 12s`).
 - Bell: the terminal bell (BEL) rings once when a run finishes, when a run fails (`error` or `abort failed`), and when a question prompt, approval, or picker opens. Windows Terminal plays a sound or flashes depending on its `bellStyle` setting.
 - Messages: lines carry speaker labels (`You:`, `Assistant:`, `System:`, `Tool <name>:`) and there are no colors, backgrounds, bold, italics, or decorative borders.
 - Streaming: replies append sentence by sentence and earlier lines are never repainted. A sentence shows once it ends with `.`, `!`, `?`, or a newline, so a very long sentence with none of those appears only when it finishes.
 - Tool cards: state is text, `[running]`, `[ok]`, or `[failed]`. Tool output stays collapsed until you expand it with `Ctrl+O`.
-- Input: the composer line starts with a `$` prompt marker and the real terminal cursor follows the caret. In pickers and overlays the cursor sits on the selected row (the row that starts with `→`).
+- Input: the composer line starts with a `$` prompt marker and the real terminal cursor follows the caret.
+- Pickers (`Ctrl+L` models, `Ctrl+G` agents, `Ctrl+P` sessions, `/settings`): the real cursor sits on the selected row, so a screen reader speaks only that row as you arrow. The rows themselves do not change while you move: the `→` cue, the `n/m` counter and the ruled divider are not shown, the visible window scrolls only when the selection reaches an edge, and the picker covers whole terminal rows so earlier chat text is never read with the options. Padding between a label and its description becomes a comma, and a description that only repeats the label (for example a model's display name) is dropped.
+- `/btw`: sending a side question says `Asking side question`. The answer opens in a focused overlay that starts with `Your btw answer:` followed by the answer and the question. `Esc` or `Enter` closes it and `c` copies the answer to the clipboard (`Copied to clipboard.` or `Copy failed.`). If the run ends without an answer you hear `btw ended without an answer.`, and after 60 seconds without one, `btw failed: no answer received`.
 - Mouse input is not supported in this mode.
 - Example config:
 
