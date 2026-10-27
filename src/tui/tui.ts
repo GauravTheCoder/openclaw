@@ -578,7 +578,6 @@ async function runTuiUnlocked(opts: RunTuiOptions): Promise<TuiResult> {
   const connectionLineage = createTuiConnectionLineage();
   let remediationShown = false;
   const localRunIds = createTuiRunIdTracker();
-  const localBtwRunIds = createTuiRunIdTracker();
 
   const deliverDefault = opts.deliver ?? false;
   const autoMessage = opts.message?.trim();
@@ -1194,9 +1193,9 @@ async function runTuiUnlocked(opts: RunTuiOptions): Promise<TuiResult> {
     isLocalRunId: localRunIds.has,
     forgetLocalRunId: localRunIds.forget,
     clearLocalRunIds: localRunIds.clear,
-    isLocalBtwRunId: localBtwRunIds.has,
-    forgetLocalBtwRunId: localBtwRunIds.forget,
-    clearLocalBtwRunIds: localBtwRunIds.clear,
+    isLocalBtwRunId: btw.isRunId,
+    forgetLocalBtwRunId: btw.forgetRunId,
+    clearLocalBtwRunIds: btw.clearRunIds,
   });
   reconcileReconnectRun = reconnectStreamingWatchdog;
   const localCli = createTuiLocalCliRunner();
@@ -1292,9 +1291,9 @@ async function runTuiUnlocked(opts: RunTuiOptions): Promise<TuiResult> {
     abortActive,
     setActivityStatus,
     noteLocalRunId: localRunIds.note,
-    noteLocalBtwRunId: localBtwRunIds.note,
+    noteLocalBtwRunId: btw.noteRunId,
     forgetLocalRunId: localRunIds.forget,
-    forgetLocalBtwRunId: localBtwRunIds.forget,
+    forgetLocalBtwRunId: btw.forgetRunId,
     consumeCompletedRunForPendingSend,
     isRunObserved,
     flushPendingHistoryRefreshIfIdle,
