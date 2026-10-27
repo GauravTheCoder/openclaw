@@ -727,7 +727,7 @@ async function runTuiUnlocked(opts: RunTuiOptions): Promise<TuiResult> {
       chatLog.addSystem(notice, { coalesceConsecutive: true });
     }
   };
-  const editor = new CustomEditor(tui, editorTheme);
+  const editor = new CustomEditor(tui, editorTheme, a11y.screenReader);
   const root = new Container();
   for (const component of [header, chatLog, statusContainer, footer, questionStatus, editor]) {
     root.addChild(component);

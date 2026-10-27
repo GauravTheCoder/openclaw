@@ -1,4 +1,12 @@
-import { Editor, getKeybindings, isKeyRelease, Key, matchesKey } from "@earendil-works/pi-tui";
+import {
+  Editor,
+  getKeybindings,
+  isKeyRelease,
+  Key,
+  matchesKey,
+  type EditorTheme,
+  type TUI,
+} from "@earendil-works/pi-tui";
 
 // Kitty keyboard protocol uses CSI-u sequences for AltGr on international layouts.
 const KITTY_CSI_U_SUFFIX_REGEX = /^(\d+)(?::(\d*))?(?::(\d+))?(?:;(\d+))?(?::(\d+))?u$/u;
@@ -59,6 +67,29 @@ export class CustomEditor extends Editor {
   onCtrlP?: () => void;
   onCtrlT?: () => void;
   shouldSubmitAutocomplete?: (text: string) => boolean;
+
+  constructor(
+    tui: TUI,
+    theme: EditorTheme,
+    private readonly screenReader = false,
+  ) {
+    // Two columns of left padding hold the "$ " input marker.
+    super(tui, theme, screenReader ? { paddingX: 2 } : undefined);
+  }
+
+  /** Screen reader mode: "$ " opens the input line and decorative borders are dropped. */
+  override render(width: number): string[] {
+    const lines = super.render(width);
+    if (!this.screenReader) {
+      return lines;
+    }
+    const rows = lines.filter((line) => !/^─+$/u.test(line));
+    const first = rows[0];
+    if (first?.startsWith("  ")) {
+      rows[0] = `$ ${first.slice(2)}`;
+    }
+    return rows;
+  }
 
   /** Preserve raw submit text so the owner chooses local editor dispatch before trimming. */
   override handleInput(data: string): void {

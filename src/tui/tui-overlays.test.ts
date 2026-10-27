@@ -33,6 +33,7 @@ describe("createOverlayHandlers", () => {
       hasOverlay: () => open,
       hideOverlay: vi.fn(),
       setFocus,
+      setShowHardwareCursor: vi.fn(),
     };
 
     const { openOverlay, closeOverlay } = createOverlayHandlers(host, createComponent());
@@ -54,6 +55,7 @@ describe("createOverlayHandlers", () => {
       hideOverlay: vi.fn(),
       hasOverlay: () => openCount > 0,
       setFocus: vi.fn(),
+      setShowHardwareCursor: vi.fn(),
     };
     const fallback = createComponent();
     const makeClosingHandle = () =>
@@ -71,5 +73,41 @@ describe("createOverlayHandlers", () => {
 
     closeOverlay(upperOverlay);
     expect(host.setFocus).toHaveBeenCalledWith(fallback);
+  });
+});
+
+describe("createOverlayHandlers in screen reader mode", () => {
+  it("rings the bell, shows the real cursor and wraps overlays", () => {
+    const shown: Component[] = [];
+    const host = {
+      showOverlay: (component: Component) => {
+        shown.push(component);
+        return createHandle();
+      },
+      hasOverlay: () => false,
+      setFocus: vi.fn(),
+      setShowHardwareCursor: vi.fn(),
+    };
+    const bell = vi.fn();
+    const { openOverlay } = createOverlayHandlers(host, createComponent(), bell);
+    expect(host.setShowHardwareCursor).toHaveBeenCalledWith(true);
+    const overlay = createComponent();
+    openOverlay(overlay);
+    expect(bell).toHaveBeenCalledTimes(1);
+    expect(shown[0]).not.toBe(overlay);
+    expect(shown[0]?.render(20)).toEqual(["dummy"]);
+  });
+
+  it("leaves the cursor and overlays alone by default", () => {
+    const host = {
+      showOverlay: vi.fn(() => createHandle()),
+      hasOverlay: () => false,
+      setFocus: vi.fn(),
+      setShowHardwareCursor: vi.fn(),
+    };
+    const overlay = createComponent();
+    createOverlayHandlers(host, createComponent()).openOverlay(overlay);
+    expect(host.setShowHardwareCursor).not.toHaveBeenCalled();
+    expect(host.showOverlay).toHaveBeenCalledWith(overlay, undefined);
   });
 });

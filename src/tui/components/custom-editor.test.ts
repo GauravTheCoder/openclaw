@@ -82,3 +82,29 @@ describe("CustomEditor", () => {
     expect(onSubmit).toHaveBeenCalledExactlyOnceWith("/help\n");
   });
 });
+
+describe("CustomEditor in screen reader mode", () => {
+  const make = (screenReader: boolean) => {
+    const editor = new CustomEditor(
+      { requestRender: vi.fn(), terminal: { rows: 40 } } as unknown as TUI,
+      editorTheme,
+      screenReader,
+    );
+    editor.focused = true;
+    editor.setText("hello");
+    return editor.render(40);
+  };
+
+  it("starts the input line with a $ marker and drops border rows", () => {
+    const lines = make(true);
+    expect(lines).toHaveLength(1);
+    expect(lines[0]?.startsWith("$ hello")).toBe(true);
+    expect(lines[0]).toContain("\u001b_pi:c\u0007");
+  });
+
+  it("keeps the bordered layout without the marker by default", () => {
+    const lines = make(false);
+    expect(lines.length).toBeGreaterThan(1);
+    expect(lines.join("")).not.toContain("$ ");
+  });
+});
