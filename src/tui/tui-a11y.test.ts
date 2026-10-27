@@ -1,6 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
-import { describeA11yStatusChange as change, resolveTuiA11y } from "./tui-a11y.js";
+import {
+  createA11yStatusReporter,
+  describeA11yStatusChange as change,
+  resolveTuiA11y,
+} from "./tui-a11y.js";
 
 const configOn = { ui: { tui: { screenReader: true } } } as OpenClawConfig;
 const configOff = { ui: { tui: { screenReader: false } } } as OpenClawConfig;
@@ -82,5 +86,31 @@ describe("applyTuiA11yTheme", () => {
     } finally {
       chalk.level = saved;
     }
+  });
+});
+
+describe("createA11yStatusReporter", () => {
+  const setup = () => {
+    const lines: string[] = [];
+    const bell = vi.fn();
+    const reporter = createA11yStatusReporter({ addLine: (t) => lines.push(t), bell });
+    return { lines, bell, reporter };
+  };
+
+  it("stays silent through startup", () => {
+    const { lines, bell, reporter } = setup();
+    reporter.update("starting up");
+    reporter.update("idle");
+    expect(lines).toEqual([]);
+    expect(bell).not.toHaveBeenCalled();
+  });
+
+  it("announces a run and rings once at the end", () => {
+    const { lines, bell, reporter } = setup();
+    for (const status of ["sending", "waiting", "streaming", "streaming", "idle"]) {
+      reporter.update(status);
+    }
+    expect(lines).toEqual(["Working", "Status: waiting", "Status: streaming", "Done in 0s"]);
+    expect(bell).toHaveBeenCalledTimes(1);
   });
 });

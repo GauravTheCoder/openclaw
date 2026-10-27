@@ -33,6 +33,9 @@ export function describeA11yStatusChange(params: {
   return { line: `Status: ${next}`, bell: next === "error" || next === "abort failed" };
 }
 
+// Startup is busy for the spinner but is not a run the user waits on.
+const isRunStatus = (status: string) => status !== "starting up" && isTuiBusyActivityStatus(status);
+
 export function createA11yStatusReporter(deps: {
   addLine: (text: string) => void;
   bell: () => void;
@@ -41,8 +44,8 @@ export function createA11yStatusReporter(deps: {
   let startedAt: number | null = null;
   return {
     update(next: string) {
-      const wasBusy = isTuiBusyActivityStatus(previous);
-      const isBusy = isTuiBusyActivityStatus(next);
+      const wasBusy = isRunStatus(previous);
+      const isBusy = isRunStatus(next);
       const change = describeA11yStatusChange({
         previous,
         next,
@@ -56,7 +59,7 @@ export function createA11yStatusReporter(deps: {
         startedAt = null;
       }
       previous = next;
-      if (change) {
+      if (change && next !== "starting up") {
         deps.addLine(change.line);
         if (change.bell) {
           deps.bell();
