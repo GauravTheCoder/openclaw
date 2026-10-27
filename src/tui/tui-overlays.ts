@@ -1,4 +1,5 @@
 import type { Component, OverlayHandle, TUI } from "@earendil-works/pi-tui";
+import { BtwOverlay } from "./components/btw-overlay.js";
 import { SelectionCursor } from "./components/selection-cursor.js";
 
 type OverlayHost = Pick<TUI, "showOverlay" | "hasOverlay" | "setFocus" | "setShowHardwareCursor">;
@@ -30,7 +31,9 @@ export function createOverlayHandlers(
     screenReaderBell();
     // A narrower overlay is spliced into chat rows, so a reader would also speak the earlier
     // messages sitting beside the options. Full-width rows replace them outright.
-    return host.showOverlay(new SelectionCursor(component), {
+    // The btw answer parks its own cursor; its text may start lines with an arrow.
+    const parked = component instanceof BtwOverlay ? component : new SelectionCursor(component);
+    return host.showOverlay(parked, {
       ...options,
       width: "100%",
       offsetX: 0,
