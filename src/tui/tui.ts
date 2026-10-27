@@ -897,10 +897,7 @@ async function runTuiUnlocked(opts: RunTuiOptions): Promise<TuiResult> {
   });
   const a11yBell = a11y.screenReader ? () => tui.terminal.write(TUI_BELL) : undefined;
   const a11yStatus = a11yBell
-    ? createA11yStatusReporter({
-        addLine: (t) => chatLog.addSystem(t),
-        bell: a11yBell,
-      })
+    ? createA11yStatusReporter({ addLine: (t) => chatLog.addSystem(t), bell: a11yBell })
     : undefined;
 
   const stopStatusTimeout = () => {
@@ -1066,6 +1063,7 @@ async function runTuiUnlocked(opts: RunTuiOptions): Promise<TuiResult> {
   const questions = createTuiQuestionController({
     ...promptContext,
     onPendingChange: (text) => questionStatus.setText(theme.accent(text)),
+    screenReader: a11y.screenReader,
   });
   const reportQuestionRefreshError = () => {
     chatLog.addSystem("question refresh failed; reconnect or use /question to retry");
