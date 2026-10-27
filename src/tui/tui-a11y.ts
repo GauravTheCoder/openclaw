@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import type { OpenClawConfig } from "../config/config.js";
 import { isTuiBusyActivityStatus } from "./tui-activity-status.js";
 import { formatElapsed } from "./tui-status-line.js";
@@ -63,4 +64,17 @@ export function createA11yStatusReporter(deps: {
       }
     },
   };
+}
+
+// No color, background, bold or italic: chalk renders every theme function as plain text.
+export function applyTuiA11yTheme(a11y: TuiA11y) {
+  if (a11y.screenReader) {
+    chalk.level = 0;
+  }
+}
+
+export function setupTuiA11y(params: Parameters<typeof resolveTuiA11y>[0]) {
+  const a11y = resolveTuiA11y(params);
+  applyTuiA11yTheme(a11y);
+  return a11y;
 }

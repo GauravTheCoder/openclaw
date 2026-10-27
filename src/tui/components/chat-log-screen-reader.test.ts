@@ -47,3 +47,32 @@ describe("ChatLog screen reader mode", () => {
     expect(lines(log).join("\n")).not.toContain("You:");
   });
 });
+
+describe("tool cards in screen reader mode", () => {
+  const start = (log: ChatLog) => log.startTool("t1", "read_file", { path: "a.txt" }, "r1");
+  const text = (log: ChatLog) => lines(log).join("\n");
+
+  it("carries state as text prefixes with no background or padding rows", () => {
+    const log = new ChatLog(50, undefined, true);
+    start(log);
+    expect(text(log)).toContain("[running]");
+    expect(log.render(80)[0]).toMatch(/^Tool /);
+    log.updateToolResult("t1", { content: [{ type: "text", text: "done" }] });
+    expect(text(log)).toContain("[ok]");
+    expect(text(log)).not.toContain("[running]");
+  });
+
+  it("marks failures", () => {
+    const log = new ChatLog(50, undefined, true);
+    start(log);
+    log.updateToolResult("t1", { content: [{ type: "text", text: "boom" }] }, { isError: true });
+    expect(text(log)).toContain("[failed]");
+  });
+
+  it("keeps the default title format outside screen reader mode", () => {
+    const log = new ChatLog(50);
+    start(log);
+    expect(text(log)).toContain("(running)");
+    expect(text(log)).not.toContain("[running]");
+  });
+});

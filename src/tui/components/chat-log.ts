@@ -588,7 +588,12 @@ export class ChatLog extends Container {
       run.committedText = run.latestText ?? "";
       run.streaming = undefined;
     }
-    const component = new ToolExecutionComponent(toolName, args, this.imageRenderer);
+    const component = new ToolExecutionComponent(
+      toolName,
+      args,
+      this.imageRenderer,
+      this.screenReader,
+    );
     if (activity !== undefined) {
       component.setActivity(activity);
     }

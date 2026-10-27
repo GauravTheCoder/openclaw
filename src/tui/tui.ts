@@ -46,7 +46,7 @@ import { getSlashCommands, shouldSubmitExactArgumentCompletion } from "./command
 import { ChatLog } from "./components/chat-log.js";
 import { CustomEditor } from "./components/custom-editor.js";
 import { editorTheme, tuiTheme as theme } from "./theme/theme.js";
-import { createA11yStatusReporter, resolveTuiA11y, TUI_BELL } from "./tui-a11y.js";
+import { createA11yStatusReporter, setupTuiA11y, TUI_BELL } from "./tui-a11y.js";
 import {
   createTuiProgramStatusReporter,
   isTuiBusyActivityStatus,
@@ -558,7 +558,7 @@ async function runTuiUnlocked(opts: RunTuiOptions): Promise<TuiResult> {
   const config =
     opts.config ??
     (await captureRuntimeConfigAsyncReader({ skipPluginValidation: !isLocalMode })());
-  const a11y = resolveTuiA11y({ flag: opts.screenReader, config });
+  const a11y = setupTuiA11y({ flag: opts.screenReader, config });
   const cliInvocation = resolveCurrentOpenClawCliInvocation([]);
   const resolveUsableCwd = () => tryProcessCwd() ?? cliInvocation.cwd;
   const initialSessionInput = (opts.session ?? "").trim();

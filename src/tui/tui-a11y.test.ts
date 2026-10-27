@@ -66,3 +66,21 @@ describe("describeA11yStatusChange", () => {
     ).toBe(false);
   });
 });
+
+describe("applyTuiA11yTheme", () => {
+  it("strips styling only when screen reader mode is on", async () => {
+    const { default: chalk } = await import("chalk");
+    const { applyTuiA11yTheme } = await import("./tui-a11y.js");
+    const saved = chalk.level;
+    try {
+      chalk.level = 3;
+      applyTuiA11yTheme({ screenReader: false });
+      expect(chalk.bold("x")).not.toBe("x");
+      applyTuiA11yTheme({ screenReader: true });
+      expect(chalk.bold("x")).toBe("x");
+      expect(chalk.bgHex("#ffffff")("x")).toBe("x");
+    } finally {
+      chalk.level = saved;
+    }
+  });
+});
