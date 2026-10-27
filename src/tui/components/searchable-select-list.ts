@@ -41,6 +41,7 @@ export class SearchableSelectList extends SelectListInput implements Component, 
   }>;
   private filteredItems: SearchableSelectItem[];
   private selectedIndex = 0;
+  private windowStart?: number;
   private retainedSelection?: string;
   private highlightPatterns?: RegExp[];
   private emptyMessage = "No matches";
@@ -91,6 +92,7 @@ export class SearchableSelectList extends SelectListInput implements Component, 
       ? this.smartFilter(query)
       : this.items.filter((item) => (this.expanded ? !item.expandsCollapsed : !item.collapsed));
     this.selectedIndex = 0;
+    this.windowStart = undefined;
   }
 
   // Rank exact label matches before description matches, then fuzzy matches.
@@ -201,13 +203,18 @@ export class SearchableSelectList extends SelectListInput implements Component, 
       .toSorted((a, b) => b.length - a.length)
       .map((token) => new RegExp(escapeRegExp(token), "gi")));
 
-    const startIndex = Math.max(
-      0,
-      Math.min(
-        this.selectedIndex - Math.floor(this.maxVisible / 2),
-        this.filteredItems.length - this.maxVisible,
-      ),
-    );
+    // The first render centers the selection; after that the window only moves when the
+    // selection leaves it, so arrowing repaints one row pair instead of every visible row.
+    const maxStart = Math.max(0, this.filteredItems.length - this.maxVisible);
+    let start =
+      this.windowStart ?? Math.max(0, this.selectedIndex - Math.floor(this.maxVisible / 2));
+    if (this.selectedIndex < start) {
+      start = this.selectedIndex;
+    } else if (this.selectedIndex >= start + this.maxVisible) {
+      start = this.selectedIndex - this.maxVisible + 1;
+    }
+    const startIndex = Math.min(start, maxStart);
+    this.windowStart = startIndex;
     const endIndex = Math.min(startIndex + this.maxVisible, this.filteredItems.length);
 
     for (let i = startIndex; i < endIndex; i++) {

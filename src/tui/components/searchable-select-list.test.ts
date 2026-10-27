@@ -166,4 +166,49 @@ describe("SearchableSelectList", () => {
     expect(list.onCancel).toHaveBeenCalledTimes(1);
     expect(selectByEnter(list)).toBe(selected);
   });
+
+  describe("scroll window", () => {
+    const many = Array.from({ length: 20 }, (_, i) => item(`item-${String(i).padStart(2, "0")}`));
+    // Rows without the selection cue, so only a real change of window content shows.
+    const rows = (list: SearchableSelectList) =>
+      list
+        .render(80)
+        .slice(2)
+        .map((row) =>
+          stripAnsi(row)
+            .replace(/\*/gu, "")
+            .replace(/^[→ ]+/u, "")
+            .trim(),
+        )
+        .filter((row) => row.startsWith("item-"));
+    const down = (list: SearchableSelectList, count: number) =>
+      Array.from({ length: count }, () => list.handleInput("[B"));
+
+    it("keeps the visible rows still while the selection moves inside the window", () => {
+      const list = makeList(many, mockTheme, 5);
+      const first = rows(list);
+      down(list, 1);
+      expect(rows(list)).toEqual(first);
+      down(list, 3);
+      expect(rows(list)).toEqual(first);
+    });
+
+    it("scrolls by one row only when the selection leaves the window", () => {
+      const list = makeList(many, mockTheme, 5);
+      rows(list); // an opened picker always renders once before the first key
+      down(list, 5);
+      expect(rows(list)).toEqual(["item-01", "item-02", "item-03", "item-04", "item-05"]);
+      down(list, 1);
+      expect(rows(list)).toEqual(["item-02", "item-03", "item-04", "item-05", "item-06"]);
+    });
+
+    it("scrolls back up the same way", () => {
+      const list = makeList(many, mockTheme, 5);
+      rows(list);
+      down(list, 8);
+      const before = rows(list);
+      list.handleInput("[A");
+      expect(rows(list)).toEqual(before);
+    });
+  });
 });
