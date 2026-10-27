@@ -76,6 +76,20 @@ describe("BtwOverlay", () => {
     expect(cursorRow(overlay)).toBe("Copied to clipboard.");
   });
 
+  it("returns the cursor to the answer when scrolling after a copy", async () => {
+    const answer = Array.from({ length: 40 }, (_, i) => `line ${i + 1}`).join("\n");
+    const requestRender = vi.fn();
+    const overlay = new BtwOverlay(
+      { question: "long?", text: answer },
+      { close: vi.fn(), copy: vi.fn(async () => true), requestRender, rows: () => 12 },
+    );
+    overlay.focused = true;
+    overlay.handleInput("c");
+    await vi.waitFor(() => expect(cursorRow(overlay)).toBe("Copied to clipboard."));
+    overlay.handleInput("\x1b[B");
+    expect(cursorRow(overlay)).toBe("line 2");
+  });
+
   it("reports a failed copy at the cursor", async () => {
     const { overlay, requestRender } = make(vi.fn(async () => false));
     overlay.handleInput("c");

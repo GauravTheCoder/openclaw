@@ -93,6 +93,9 @@ export class BtwOverlay extends Container implements Focusable {
       const next = Math.max(0, Math.min(this.maxScroll, this.scroll + step));
       if (step && next !== this.scroll) {
         this.scroll = next;
+        // Scrolling hands the cursor back to the answer.
+        this.noticeText = "";
+        this.notice.setText("");
         this.actions.requestRender();
       }
     }
