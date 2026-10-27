@@ -1,11 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
-import {
-  createA11yStatusReporter,
-  describeA11yStatusChange as change,
-  resolveTuiA11y,
-  setupTuiA11y,
-} from "./tui-a11y.js";
+import { createA11yStatusReporter, resolveTuiA11y, setupTuiA11y } from "./tui-a11y.js";
 
 const configOn = { ui: { tui: { screenReader: true } } } as OpenClawConfig;
 const configOff = { ui: { tui: { screenReader: false } } } as OpenClawConfig;
@@ -26,67 +21,6 @@ describe("resolveTuiA11y", () => {
 
   it("stays off when the flag is false and config is off", () => {
     expect(resolveTuiA11y({ flag: false, config: configOff })).toEqual({ screenReader: false });
-  });
-});
-
-describe("describeA11yStatusChange", () => {
-  it("ignores repeated statuses", () => {
-    expect(change({ previous: "streaming", next: "streaming", wasBusy: true, isBusy: true })).toBe(
-      null,
-    );
-  });
-
-  it("announces run start without a bell", () => {
-    expect(change({ previous: "idle", next: "waiting", wasBusy: false, isBusy: true })).toEqual({
-      line: "Working",
-      bell: false,
-    });
-  });
-
-  it("announces busy-to-busy transitions without a bell", () => {
-    expect(change({ previous: "waiting", next: "streaming", wasBusy: true, isBusy: true })).toEqual(
-      { line: "Status: streaming", bell: false },
-    );
-  });
-
-  it("rings once when a run finishes", () => {
-    expect(
-      change({ previous: "streaming", next: "idle", wasBusy: true, isBusy: false, elapsed: "12s" }),
-    ).toEqual({ line: "Done in 12s", bell: true });
-  });
-
-  it("stays silent when idle follows a non-busy status", () => {
-    expect(change({ previous: "aborted", next: "idle", wasBusy: false, isBusy: false })).toBe(null);
-  });
-
-  it("rings on error and abort failure, not on user abort", () => {
-    expect(change({ previous: "running", next: "error", wasBusy: true, isBusy: false })?.bell).toBe(
-      true,
-    );
-    expect(
-      change({ previous: "running", next: "abort failed", wasBusy: true, isBusy: false })?.bell,
-    ).toBe(true);
-    expect(
-      change({ previous: "running", next: "aborted", wasBusy: true, isBusy: false })?.bell,
-    ).toBe(false);
-  });
-});
-
-describe("applyTuiA11yTheme", () => {
-  it("strips styling only when screen reader mode is on", async () => {
-    const { default: chalk } = await import("chalk");
-    const { applyTuiA11yTheme } = await import("./tui-a11y.js");
-    const saved = chalk.level;
-    try {
-      chalk.level = 3;
-      applyTuiA11yTheme({ screenReader: false });
-      expect(chalk.bold("x")).not.toBe("x");
-      applyTuiA11yTheme({ screenReader: true });
-      expect(chalk.bold("x")).toBe("x");
-      expect(chalk.bgHex("#ffffff")("x")).toBe("x");
-    } finally {
-      chalk.level = saved;
-    }
   });
 });
 
@@ -114,6 +48,28 @@ describe("createA11yStatusReporter", () => {
     expect(lines).toEqual(["Working", "Status: waiting", "Status: streaming", "Done in 0s"]);
     expect(bell).toHaveBeenCalledTimes(1);
   });
+
+  it("ignores repeated statuses and rings only for error and abort failure", () => {
+    const { lines, bell, reporter } = setup();
+    reporter.update("streaming");
+    reporter.update("streaming");
+    expect(lines).toEqual(["Working"]);
+    for (const status of [
+      "aborted",
+      "idle",
+      "running",
+      "abort failed",
+      "idle",
+      "running",
+      "error",
+    ]) {
+      reporter.update(status);
+    }
+    expect(
+      lines.filter((line) => line.startsWith("Status: a") || line === "Status: error"),
+    ).toEqual(["Status: aborted", "Status: abort failed", "Status: error"]);
+    expect(bell).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("setupTuiA11y", () => {
@@ -122,8 +78,10 @@ describe("setupTuiA11y", () => {
     const saved = chalk.level;
     const write = vi.spyOn(process.stdout, "write").mockReturnValue(true);
     try {
+      chalk.level = 3;
       setupTuiA11y({ flag: false });
       expect(write).not.toHaveBeenCalled();
+      expect(chalk.bold("x")).not.toBe("x");
       setupTuiA11y({ flag: true });
       expect(write).toHaveBeenCalledExactlyOnceWith("Screen reader mode on\n");
     } finally {

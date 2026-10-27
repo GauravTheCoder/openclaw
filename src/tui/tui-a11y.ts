@@ -13,7 +13,7 @@ export function resolveTuiA11y(params: { flag?: boolean; config?: OpenClawConfig
 export const TUI_BELL = "\x07";
 
 // Screen reader mode: one line and at most one bell per status change, nothing per tick.
-export function describeA11yStatusChange(params: {
+function describeA11yStatusChange(params: {
   previous: string;
   next: string;
   wasBusy: boolean;
@@ -70,7 +70,7 @@ export function createA11yStatusReporter(deps: {
 }
 
 // No color, background, bold or italic: chalk renders every theme function as plain text.
-export function applyTuiA11yTheme(a11y: TuiA11y) {
+function applyTuiA11yTheme(a11y: TuiA11y) {
   if (a11y.screenReader) {
     chalk.level = 0;
   }

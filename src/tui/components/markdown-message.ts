@@ -53,7 +53,7 @@ export class MarkdownMessageComponent extends Container {
 
   setText(text: string) {
     if (!this.plain) {
-      (this.body as HyperlinkMarkdown).setText(text);
+      this.body.setText(text);
       return;
     }
     this.raw = text;
@@ -74,7 +74,7 @@ export class MarkdownMessageComponent extends Container {
     const text = this.raw.replace(/(?<!\b\d+|\b\p{L})([.!?])[ \t]+(?=\S)/gu, "$1\n");
     const visible = this.streaming ? text.slice(0, text.lastIndexOf("\n") + 1) : text;
     const trimmed = visible.trim();
-    (this.body as Text).setText(trimmed ? `${PLAIN_LABELS[this.role]} ${trimmed}` : "");
+    this.body.setText(trimmed ? `${PLAIN_LABELS[this.role]} ${trimmed}` : "");
   }
 
   setImages(images: readonly TuiImageSource[]) {
