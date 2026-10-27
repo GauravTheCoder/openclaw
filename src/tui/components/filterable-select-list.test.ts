@@ -1,5 +1,5 @@
 import { renderFakeCursor, visibleWidth } from "@earendil-works/pi-tui";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { stripAnsi } from "../../../packages/terminal-core/src/ansi.js";
 import { FilterableSelectList, type FilterableSelectItem } from "./filterable-select-list.js";
 import { attacks, expectText, select, theme, typeText } from "./render.test-support.js";
@@ -131,14 +131,14 @@ describe("FilterableSelectList", () => {
       const list = createList(many, 5);
       rows(list);
       list.handleInput("\u001b[A");
-      expect(selectByEnter(list)?.value).toBe("s-19");
+      expect(select(list)?.value).toBe("s-19");
       list.handleInput("\u001b[B");
-      expect(selectByEnter(list)?.value).toBe("s-0");
+      expect(select(list)?.value).toBe("s-0");
     });
 
     it("ignores navigation when the filter matches nothing", () => {
       const list = createList(many, 5);
-      typeInput(list, "zzzzzzzzzz");
+      typeText(list, "zzzzzzzzzz");
       list.handleInput("\u001b[B");
       list.handleInput("\u001b[A");
       const onSelect = vi.fn();
@@ -152,9 +152,9 @@ describe("FilterableSelectList", () => {
       const list = createList(many, 5);
       rows(list);
       down(list, 7);
-      expect(selectByEnter(list)?.value).toBe("s-7");
-      typeInput(list, "session-15");
-      expect(selectByEnter(list)?.value).toBe("s-15");
+      expect(select(list)?.value).toBe("s-7");
+      typeText(list, "session-15");
+      expect(select(list)?.value).toBe("s-15");
     });
   });
 });

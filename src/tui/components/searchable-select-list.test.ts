@@ -134,7 +134,7 @@ describe("SearchableSelectList", () => {
       Array.from({ length: count }, () => list.handleInput("[B"));
 
     it("keeps the visible rows still while the selection moves inside the window", () => {
-      const list = makeList(many, mockTheme, 5);
+      const list = makeList(many, theme, 5);
       const first = rows(list);
       down(list, 1);
       expect(rows(list)).toEqual(first);
@@ -143,7 +143,7 @@ describe("SearchableSelectList", () => {
     });
 
     it("scrolls by one row only when the selection leaves the window", () => {
-      const list = makeList(many, mockTheme, 5);
+      const list = makeList(many, theme, 5);
       rows(list); // an opened picker always renders once before the first key
       down(list, 5);
       expect(rows(list)).toEqual(["item-01", "item-02", "item-03", "item-04", "item-05"]);
@@ -152,7 +152,7 @@ describe("SearchableSelectList", () => {
     });
 
     it("scrolls back up the same way", () => {
-      const list = makeList(many, mockTheme, 5);
+      const list = makeList(many, theme, 5);
       rows(list);
       down(list, 8);
       const before = rows(list);
