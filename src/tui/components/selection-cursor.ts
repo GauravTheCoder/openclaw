@@ -1,6 +1,8 @@
 import { CURSOR_MARKER, type Component, type Focusable } from "@earendil-works/pi-tui";
 
-const SELECTED_ROW = /^(\s*→ )/u;
+const SELECTED_ROW = /^(\s*)→ /u;
+// "n/m" position rows repaint on every arrow press and would be announced again.
+const COUNTER_ROW = /^\s*\d+\/\d+\s*$/u;
 
 /** Screen reader mode: parks the real cursor on the selected row so readers follow selection. */
 export class SelectionCursor implements Component, Focusable {
@@ -34,12 +36,15 @@ export class SelectionCursor implements Component, Focusable {
     if (selected < 0) {
       return lines;
     }
-    // The inner component's own marker (search box) would compete for the single cursor.
-    return lines.map((line, index) =>
-      index === selected
-        ? line.replace(SELECTED_ROW, `$1${CURSOR_MARKER}`)
-        : line.split(CURSOR_MARKER).join(""),
-    );
+    // Rows stay byte-identical while you arrow: the "→" cue is blanked everywhere and only the
+    // zero-width cursor marker moves, so a reader announces the selected row once instead of
+    // every repainted row. The inner component's own marker (search box) would compete for it.
+    return lines
+      .map((line, index) => {
+        const row = line.split(CURSOR_MARKER).join("").replace(SELECTED_ROW, "$1  ");
+        return index === selected ? row.replace(/^(\s*)/u, `$1${CURSOR_MARKER}`) : row;
+      })
+      .filter((line) => !COUNTER_ROW.test(line));
   }
 
   handleInput(data: string) {
