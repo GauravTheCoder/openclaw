@@ -55,6 +55,7 @@ import {
 import { createTuiAuthChildOwner } from "./tui-auth-child.js";
 import { createTuiAutocompleteProvider } from "./tui-autocomplete.js";
 import type { TuiBackend } from "./tui-backend.js";
+import { createBtwPresenter } from "./tui-btw-overlay.js";
 import { createCommandHandlers } from "./tui-command-handlers.js";
 import { createEventHandlers } from "./tui-event-handlers.js";
 import {
@@ -1073,14 +1074,13 @@ async function runTuiUnlocked(opts: RunTuiOptions): Promise<TuiResult> {
   };
   const refreshQuestions = () => questions.refresh().catch(reportQuestionRefreshError);
   const pluginApprovals = createTuiPluginApprovalController(promptContext);
-  const btw = {
-    showResult: (params: { question: string; text: string; isError?: boolean }) => {
-      chatLog.showBtw(params);
-    },
-    clear: () => {
-      chatLog.dismissBtw();
-    },
-  };
+  const btw = createBtwPresenter({
+    screenReader: a11y.screenReader,
+    chatLog,
+    tui,
+    openOverlay,
+    closeOverlay,
+  });
 
   const initialSessionAgentId = initialSessionInput ? state.currentAgentId : null;
   const sessionActions = createSessionActions({
