@@ -53,7 +53,11 @@ export function createBtwPresenter(deps: {
   const showResult = (params: BtwResult) => {
     stopWaiting();
     clear();
-    const overlay = new BtwOverlay(params, { close: clear, copy: deps.copy ?? copyToClipboard });
+    const overlay = new BtwOverlay(params, {
+      close: clear,
+      copy: deps.copy ?? copyToClipboard,
+      requestRender: () => deps.tui.requestRender(),
+    });
     handle = deps.openOverlay(overlay, { width: "100%" });
   };
   // The tracker sees each run id once or twice (provisional and accepted); announce once.

@@ -7,27 +7,35 @@ type BtwOverlayParams = { question: string; text: string; isError?: boolean };
 export class BtwOverlay extends Container implements Focusable {
   focused = false;
   private readonly notice = new Text("", 0, 0);
+  private readonly answer: string;
+  private noticeText = "";
 
   constructor(
     params: BtwOverlayParams,
-    private readonly actions: { close: () => void; copy: (text: string) => Promise<boolean> },
+    private readonly actions: {
+      close: () => void;
+      copy: (text: string) => Promise<boolean>;
+      requestRender: () => void;
+    },
   ) {
     super();
     this.answer = sanitizeRenderableText(params.text).trim() || "(no output)";
-    this.addChild(new Text(`BTW: ${sanitizeRenderableLine(params.question)}`, 0, 0));
-    this.addChild(new Text(`${params.isError ? "Error: " : ""}${this.answer}`, 0, 0));
+    const lead = params.isError ? "btw error" : "Your btw answer";
+    this.addChild(new Text(`${lead}: ${this.answer}`, 0, 0));
+    this.addChild(new Text(`Question: ${sanitizeRenderableLine(params.question)}`, 0, 0));
     this.addChild(new Text("Esc or Enter: close. c: copy answer.", 0, 0));
     this.addChild(this.notice);
   }
 
-  private readonly answer: string;
-
   override render(width: number): string[] {
     const lines = super.render(width);
-    // Cursor on the first line so the reader starts at the question.
-    return this.focused && lines[0] !== undefined
-      ? [`${CURSOR_MARKER}${lines[0]}`, ...lines.slice(1)]
-      : lines;
+    if (!this.focused) {
+      return lines;
+    }
+    // A reader speaks the line under the cursor: the answer when it opens, the copy result
+    // once there is one.
+    const target = this.noticeText ? lines.length - this.notice.render(width).length : 0;
+    return lines.map((line, index) => (index === target ? `${CURSOR_MARKER}${line}` : line));
   }
 
   handleInput(data: string) {
@@ -35,8 +43,10 @@ export class BtwOverlay extends Container implements Focusable {
       this.actions.close();
     } else if (data === "c" || data === "C") {
       void this.actions.copy(this.answer).then((copied) => {
-        this.notice.setText(copied ? "Copied." : "Copy failed.");
+        this.noticeText = copied ? "Copied to clipboard." : "Copy failed.";
+        this.notice.setText(this.noticeText);
         this.invalidate();
+        this.actions.requestRender();
       });
     }
   }

@@ -40,6 +40,30 @@ describe("SelectionCursor", () => {
     expect(strip(wrapper.render(40))).toEqual(["Filter: ", "  one", "  two"]);
   });
 
+  it("turns column padding into a comma so a row reads as one phrase", () => {
+    const { wrapper } = list([
+      "→ main                        just now · hi, this is a test",
+      "  other   2d",
+    ]);
+    wrapper.focused = true;
+    expect(strip(wrapper.render(80))).toEqual([
+      "  main, just now · hi, this is a test",
+      "  other, 2d",
+    ]);
+  });
+
+  it("says a model once when its description only restates the id", () => {
+    const { wrapper } = list([
+      "→ opencode-go/deepseek-v4.1-flash          DeepSeek V4.1 Flash",
+      "  opencode-go/glm-5.3          GLM 5.3 · unavailable",
+    ]);
+    wrapper.focused = true;
+    expect(strip(wrapper.render(100))).toEqual([
+      "  opencode-go/deepseek-v4.1-flash",
+      "  opencode-go/glm-5.3, GLM 5.3 · unavailable",
+    ]);
+  });
+
   it("drops the n/m position row", () => {
     const { wrapper } = list(["→ one", "  two", "  1/2"]);
     wrapper.focused = true;

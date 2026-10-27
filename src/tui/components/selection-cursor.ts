@@ -5,6 +5,23 @@ const SELECTED_ROW = /^(\s*)→ /u;
 // announce again on every repaint.
 const DECORATION_ROW = /^\s*(?:\(?\d+\/\d+\)?|─+)\s*$/u;
 
+const comparable = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/gu, "");
+
+// Picker rows pad label and description into columns. A reader hears that padding as dead air,
+// and a description that restates the label ("opencode-go/deepseek-v4.1-flash  DeepSeek V4.1
+// Flash") as the same name twice. Join the distinct parts with a comma instead.
+function tidyColumns(row: string): string {
+  const indent = /^\s*/u.exec(row)?.[0] ?? "";
+  const kept: string[] = [];
+  for (const part of row.slice(indent.length).split(/ {2,}/u)) {
+    const key = comparable(part);
+    if (part && !(key.length >= 4 && kept.some((earlier) => comparable(earlier).includes(key)))) {
+      kept.push(part);
+    }
+  }
+  return indent + kept.join(", ");
+}
+
 /** Screen reader mode: parks the real cursor on the selected row so readers follow selection. */
 export class SelectionCursor implements Component, Focusable {
   handleMouse: Component["handleMouse"];
@@ -42,7 +59,7 @@ export class SelectionCursor implements Component, Focusable {
     // every repainted row. The inner component's own marker (search box) would compete for it.
     return lines
       .map((line, index) => {
-        const row = line.split(CURSOR_MARKER).join("").replace(SELECTED_ROW, "$1  ");
+        const row = tidyColumns(line.split(CURSOR_MARKER).join("").replace(SELECTED_ROW, "$1  "));
         return index === selected ? row.replace(/^(\s*)/u, `$1${CURSOR_MARKER}`) : row;
       })
       .filter((line) => !DECORATION_ROW.test(line));
