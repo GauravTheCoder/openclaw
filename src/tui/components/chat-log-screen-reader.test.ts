@@ -34,6 +34,17 @@ describe("ChatLog screen reader mode", () => {
     expect(done.join("\n")).toContain("three");
   });
 
+  it("surfaces a long paragraph sentence by sentence without repainting earlier rows", () => {
+    const log = new ChatLog(50, undefined, true);
+    log.updateAssistant("First one. Second one. Third", "r1");
+    const early = lines(log);
+    expect(early).toEqual(["Assistant: First one.", "Second one."]);
+    log.updateAssistant("First one. Second one. Third one. Fourth", "r1");
+    expect(lines(log).slice(0, early.length)).toEqual(early);
+    log.finalizeAssistant("First one. Second one. Third one. Fourth", "r1");
+    expect(lines(log)).toEqual(["Assistant: First one.", "Second one.", "Third one.", "Fourth"]);
+  });
+
   it("flushes the partial line when a tool starts", () => {
     const log = new ChatLog(50, undefined, true);
     log.updateAssistant("partial", "r1");

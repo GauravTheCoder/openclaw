@@ -69,7 +69,10 @@ export class MarkdownMessageComponent extends Container {
   }
 
   private renderPlain() {
-    const visible = this.streaming ? this.raw.slice(0, this.raw.lastIndexOf("\n") + 1) : this.raw;
+    // Sentence ends become line breaks (streaming and final alike) so a long paragraph surfaces
+    // sentence by sentence while earlier rows stay unchanged.
+    const text = this.raw.replace(/([.!?])[ \t]+(?=\S)/gu, "$1\n");
+    const visible = this.streaming ? text.slice(0, text.lastIndexOf("\n") + 1) : text;
     const trimmed = visible.trim();
     (this.body as Text).setText(trimmed ? `${PLAIN_LABELS[this.role]} ${trimmed}` : "");
   }
