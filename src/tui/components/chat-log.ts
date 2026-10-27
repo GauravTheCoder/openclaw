@@ -518,6 +518,11 @@ export class ChatLog extends Container {
     this.releaseAssistantRunIfEmpty(effectiveRunId, run);
   }
 
+  /** Reveals text a screen reader run was still holding back, e.g. when the run fails. */
+  finishAssistant(runId: string) {
+    this.assistantRuns.get(runId)?.streaming?.finish();
+  }
+
   dropAssistant(runId?: string) {
     const effectiveRunId = runId ?? "default";
     const run = this.assistantRuns.get(effectiveRunId);

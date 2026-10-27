@@ -45,6 +45,20 @@ describe("ChatLog screen reader mode", () => {
     expect(lines(log)).toEqual(["Assistant: First one.", "Second one.", "Third one.", "Fourth"]);
   });
 
+  it("keeps numbered list items and abbreviations on one line", () => {
+    const log = new ChatLog(50, undefined, true);
+    log.finalizeAssistant("1. Install it\n2. Run it, e.g. now", "r1");
+    expect(lines(log)).toEqual(["Assistant: 1. Install it", "2. Run it, e.g. now"]);
+  });
+
+  it("reveals the held-back sentence when the run fails", () => {
+    const log = new ChatLog(50, undefined, true);
+    log.updateAssistant("Done. Half a sen", "r1");
+    expect(lines(log)).toEqual(["Assistant: Done."]);
+    log.finishAssistant("r1");
+    expect(lines(log)).toEqual(["Assistant: Done.", "Half a sen"]);
+  });
+
   it("flushes the partial line when a tool starts", () => {
     const log = new ChatLog(50, undefined, true);
     log.updateAssistant("partial", "r1");

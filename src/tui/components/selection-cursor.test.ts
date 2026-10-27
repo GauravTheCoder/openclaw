@@ -24,6 +24,13 @@ describe("SelectionCursor", () => {
     expect(inner.focused).toBe(true);
   });
 
+  it("tracks focus itself when the wrapped list has no focused field", () => {
+    const inner: Component = { render: () => ["  one", "→ two"], invalidate: () => undefined };
+    const wrapper = new SelectionCursor(inner);
+    wrapper.focused = true;
+    expect(wrapper.render(40)).toEqual(["  one", `→ ${CURSOR_MARKER}two`]);
+  });
+
   it("leaves output alone when unfocused or nothing is selected", () => {
     const unfocused = list(["→ a"]).wrapper;
     expect(unfocused.render(40)).toEqual(["→ a"]);

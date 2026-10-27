@@ -10,11 +10,15 @@ export class SelectionCursor implements Component, Focusable {
     this.handleMouse = inner.handleMouse?.bind(inner);
   }
 
+  // Kept here: pi-tui lists such as SettingsList have no focused field of their own.
+  private isFocused = false;
+
   get focused() {
-    return "focused" in this.inner && this.inner.focused === true;
+    return this.isFocused;
   }
 
   set focused(value: boolean) {
+    this.isFocused = value;
     if ("focused" in this.inner) {
       this.inner.focused = value;
     }
