@@ -45,3 +45,45 @@ it(
     }
   },
 );
+
+it(
+  "draws picker rows over whole chat rows so earlier messages are not read with the options",
+  {
+    timeout: 90_000,
+  },
+  async () => {
+    const fixture = await startTuiFixture({
+      screenReader: true,
+      env: {
+        OPENCLAW_TUI_PTY_PICKER_FIXTURE: "1",
+        OPENCLAW_TUI_PTY_COLS: "100",
+        OPENCLAW_TUI_PTY_ROWS: "30",
+      },
+    });
+    try {
+      await fixture.run.waitForOutput("local ready", 20_000);
+      // Fill the screen so the centered picker lands on rows that hold chat text.
+      for (let i = 1; i <= 4; i += 1) {
+        await fixture.run.write(`kitties number ${i}.\r`, { delay: false });
+        await waitForSynchronizedFrameRows(
+          fixture.run,
+          (frame) => frame.filter((row) => row.includes("Done in")).length === i,
+          20_000,
+        );
+      }
+      await fixture.run.write("/models\r", { delay: false });
+      const rows = await waitForSynchronizedFrameRows(
+        fixture.run,
+        (frame) => frame.some((row) => row.includes("Fixture 2")),
+        20_000,
+      );
+      const optionRows = rows.filter((row) => row.includes("fixture-provider/"));
+      expect(optionRows.length).toBeGreaterThan(1);
+      expect(optionRows.filter((row) => /You:|Assistant:|System:|kitties/.test(row))).toEqual([]);
+      await fixture.run.write("\x1b", { delay: false });
+      await fixture.run.write("/exit\r", { delay: false });
+    } finally {
+      await fixture.cleanup();
+    }
+  },
+);

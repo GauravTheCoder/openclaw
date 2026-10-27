@@ -80,10 +80,10 @@ describe("createOverlayHandlers in screen reader mode", () => {
   it("rings the bell, shows the real cursor and wraps overlays", () => {
     const shown: Component[] = [];
     const host = {
-      showOverlay: (component: Component) => {
+      showOverlay: vi.fn((component: Component) => {
         shown.push(component);
         return createHandle();
-      },
+      }),
       hasOverlay: () => false,
       setFocus: vi.fn(),
       setShowHardwareCursor: vi.fn(),
@@ -95,6 +95,11 @@ describe("createOverlayHandlers in screen reader mode", () => {
     openOverlay(overlay);
     expect(bell).toHaveBeenCalledTimes(1);
     expect(shown[0]).not.toBe(overlay);
+    expect(host.showOverlay).toHaveBeenCalledWith(expect.anything(), {
+      width: "100%",
+      offsetX: 0,
+      margin: 0,
+    });
     expect(shown[0]?.render(20)).toEqual(["dummy"]);
   });
 

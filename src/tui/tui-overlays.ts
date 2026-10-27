@@ -28,7 +28,14 @@ export function createOverlayHandlers(
       return host.showOverlay(component, options);
     }
     screenReaderBell();
-    return host.showOverlay(new SelectionCursor(component), options);
+    // A narrower overlay is spliced into chat rows, so a reader would also speak the earlier
+    // messages sitting beside the options. Full-width rows replace them outright.
+    return host.showOverlay(new SelectionCursor(component), {
+      ...options,
+      width: "100%",
+      offsetX: 0,
+      margin: 0,
+    });
   };
   return { openOverlay, closeOverlay };
 }
