@@ -52,16 +52,10 @@ describe("SelectionCursor", () => {
     ]);
   });
 
-  it("says a model once when its description only restates the id", () => {
-    const { wrapper } = list([
-      "→ opencode-go/deepseek-v4.1-flash          DeepSeek V4.1 Flash",
-      "  opencode-go/glm-5.3          GLM 5.3 · unavailable",
-    ]);
+  it("keeps a description whose text ends the label", () => {
+    const { wrapper } = list(["→ my-default          default", "  other"]);
     wrapper.focused = true;
-    expect(strip(wrapper.render(100))).toEqual([
-      "  opencode-go/deepseek-v4.1-flash",
-      "  opencode-go/glm-5.3, GLM 5.3 · unavailable",
-    ]);
+    expect(strip(wrapper.render(80))).toEqual(["  my-default, default", "  other"]);
   });
 
   it("leaves prompt text with double spaces and a bare 3/4 line alone", () => {

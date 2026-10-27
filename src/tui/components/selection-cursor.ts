@@ -8,24 +8,14 @@ const DECORATION_ROW = /^ {2}\(?\d+\/\d+\)?\s*$|^\s*─+\s*$/u;
 // Column-aligned list rows start with the two-column cue slot; prompt text does not.
 const LIST_ROW = /^ {2}\S/u;
 
-const comparable = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/gu, "");
-
-// Picker rows pad label and description into columns. A reader hears that padding as dead air,
-// and a description that restates the label ("opencode-go/deepseek-v4.1-flash  DeepSeek V4.1
-// Flash") as the same name twice. Join the distinct parts with a comma instead.
+// Picker rows pad label and description into columns; a reader hears that padding as dead air.
+// Join the parts with a comma instead.
 function tidyColumns(row: string): string {
   if (!LIST_ROW.test(row)) {
     return row;
   }
   const indent = /^\s*/u.exec(row)?.[0] ?? "";
-  const kept: string[] = [];
-  for (const part of row.slice(indent.length).split(/ {2,}/u)) {
-    const key = comparable(part);
-    if (part && !(key.length >= 4 && kept.some((earlier) => comparable(earlier).endsWith(key)))) {
-      kept.push(part);
-    }
-  }
-  return indent + kept.join(", ");
+  return indent + row.slice(indent.length).split(/ {2,}/u).filter(Boolean).join(", ");
 }
 
 /** Screen reader mode: parks the real cursor on the selected row so readers follow selection. */
