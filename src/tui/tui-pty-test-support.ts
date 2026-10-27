@@ -58,7 +58,11 @@ export class PtyTestScreen {
   }
 
   write(text: string, authenticated: boolean, linkTarget?: string) {
-    for (const part of text.split(/([\b\r\n\t])/u)) {
+    for (const part of text.split(/([\b\r\n\t\u0007])/u)) {
+      if (part === "\u0007") {
+        // A bell does not move the cursor or change any cell.
+        continue;
+      }
       if (part === "\r") {
         this.col = 0;
         this.wrapPending = false;
