@@ -1,5 +1,6 @@
 import type { OpenClawConfig } from "../config/config.js";
 import { isTuiBusyActivityStatus } from "./tui-activity-status.js";
+import { formatElapsed } from "./tui-status-line.js";
 
 export type TuiA11y = { screenReader: boolean };
 
@@ -32,7 +33,6 @@ export function describeA11yStatusChange(params: {
 }
 
 export function createA11yStatusReporter(deps: {
-  formatElapsed: (startMs: number) => string;
   addLine: (text: string) => void;
   bell: () => void;
 }) {
@@ -47,7 +47,7 @@ export function createA11yStatusReporter(deps: {
         next,
         wasBusy,
         isBusy,
-        elapsed: startedAt ? deps.formatElapsed(startedAt) : undefined,
+        elapsed: startedAt ? formatElapsed(startedAt) : undefined,
       });
       if (isBusy && !wasBusy) {
         startedAt = Date.now();

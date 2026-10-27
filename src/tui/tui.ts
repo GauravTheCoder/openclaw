@@ -77,7 +77,7 @@ import { createTuiQuestionController } from "./tui-questions.js";
 import { createSessionActions } from "./tui-session-actions.js";
 import { createTuiRunIdTracker } from "./tui-session-run-coordinator.js";
 import { beginTuiShutdown } from "./tui-shutdown.js";
-import { createTuiStatusLine, formatElapsed } from "./tui-status-line.js";
+import { createTuiStatusLine } from "./tui-status-line.js";
 import {
   createEditorSubmitHandler,
   createSubmitBurstCoalescer,
@@ -712,6 +712,7 @@ async function runTuiUnlocked(opts: RunTuiOptions): Promise<TuiResult> {
           requestRender: () => tui.requestRender(),
         }
       : undefined,
+    a11y.screenReader,
   );
   const connectionNotices: string[] = [];
   const addConnectionNotice = (text: string) => {
@@ -897,7 +898,6 @@ async function runTuiUnlocked(opts: RunTuiOptions): Promise<TuiResult> {
   const a11yBell = a11y.screenReader ? () => tui.terminal.write(TUI_BELL) : undefined;
   const a11yStatus = a11yBell
     ? createA11yStatusReporter({
-        formatElapsed,
         addLine: (t) => chatLog.addSystem(t),
         bell: a11yBell,
       })

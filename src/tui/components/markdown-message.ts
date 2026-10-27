@@ -1,19 +1,39 @@
-import { Container, Spacer } from "@earendil-works/pi-tui";
+import { Container, Spacer, Text } from "@earendil-works/pi-tui";
 import { markdownTheme, tuiTheme as theme } from "../theme/theme.js";
 import type { TuiImageSource } from "../tui-images.js";
 import { HyperlinkMarkdown } from "./hyperlink-markdown.js";
 import { MessageImages, type TuiImageRenderer } from "./message-images.js";
 
+const PLAIN_LABELS = { user: "You:", assistant: "Assistant:" } as const;
+
+/**
+ * Screen reader rendering: unstyled labeled text. While streaming, only completed lines show,
+ * so earlier rows are never repainted; finish() reveals the trailing partial line.
+ */
+export type PlainMessageOptions = { streaming: boolean };
+
 export class MarkdownMessageComponent extends Container {
-  private body: HyperlinkMarkdown;
+  private body: HyperlinkMarkdown | Text;
   private images: MessageImages;
+  private raw = "";
+  private streaming = false;
 
   constructor(
     readonly role: "user" | "assistant",
     text: string,
     imageRenderer?: TuiImageRenderer,
+    private readonly plain?: PlainMessageOptions,
   ) {
     super();
+    if (plain) {
+      this.streaming = plain.streaming;
+      this.body = new Text("", 0, 0);
+      this.addChild(this.body);
+      this.images = new MessageImages(imageRenderer);
+      this.addChild(this.images);
+      this.setText(text);
+      return;
+    }
     const user = role === "user";
     this.body = new HyperlinkMarkdown(
       text,
@@ -32,7 +52,26 @@ export class MarkdownMessageComponent extends Container {
   }
 
   setText(text: string) {
-    this.body.setText(text);
+    if (!this.plain) {
+      (this.body as HyperlinkMarkdown).setText(text);
+      return;
+    }
+    this.raw = text;
+    this.renderPlain();
+  }
+
+  finish() {
+    if (!this.plain) {
+      return;
+    }
+    this.streaming = false;
+    this.renderPlain();
+  }
+
+  private renderPlain() {
+    const visible = this.streaming ? this.raw.slice(0, this.raw.lastIndexOf("\n") + 1) : this.raw;
+    const trimmed = visible.trim();
+    (this.body as Text).setText(trimmed ? `${PLAIN_LABELS[this.role]} ${trimmed}` : "");
   }
 
   setImages(images: readonly TuiImageSource[]) {
