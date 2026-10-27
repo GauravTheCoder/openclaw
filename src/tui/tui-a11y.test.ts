@@ -4,6 +4,7 @@ import {
   createA11yStatusReporter,
   describeA11yStatusChange as change,
   resolveTuiA11y,
+  setupTuiA11y,
 } from "./tui-a11y.js";
 
 const configOn = { ui: { tui: { screenReader: true } } } as OpenClawConfig;
@@ -112,5 +113,22 @@ describe("createA11yStatusReporter", () => {
     }
     expect(lines).toEqual(["Working", "Status: waiting", "Status: streaming", "Done in 0s"]);
     expect(bell).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("setupTuiA11y", () => {
+  it("announces screen reader mode once at launch, and only when it is on", async () => {
+    const { default: chalk } = await import("chalk");
+    const saved = chalk.level;
+    const write = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    try {
+      setupTuiA11y({ flag: false });
+      expect(write).not.toHaveBeenCalled();
+      setupTuiA11y({ flag: true });
+      expect(write).toHaveBeenCalledExactlyOnceWith("Screen reader mode on\n");
+    } finally {
+      write.mockRestore();
+      chalk.level = saved;
+    }
   });
 });

@@ -21,6 +21,7 @@ it(
     const fixture = await startTuiFixture({ screenReader: true });
     try {
       await fixture.run.waitForOutput("local ready", 20_000);
+      expect(fixture.run.output()).toContain("Screen reader mode on");
       expect(countBells(fixture.run.output())).toBe(0);
       await fixture.run.write(`${message}\r`, { delay: false });
       await fixture.waitForLogEntry(

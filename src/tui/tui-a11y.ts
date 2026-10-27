@@ -79,5 +79,9 @@ export function applyTuiA11yTheme(a11y: TuiA11y) {
 export function setupTuiA11y(params: Parameters<typeof resolveTuiA11y>[0]) {
   const a11y = resolveTuiA11y(params);
   applyTuiA11yTheme(a11y);
+  if (a11y.screenReader) {
+    // Printed before the TUI draws, so a reader speaks it once at launch.
+    process.stdout.write("Screen reader mode on\n");
+  }
   return a11y;
 }
