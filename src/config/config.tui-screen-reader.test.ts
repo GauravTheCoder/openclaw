@@ -10,6 +10,15 @@ describe("ui.tui.screenReader config", () => {
     }
   });
 
+  it("loads an existing ui config without the tui block unchanged", () => {
+    const ui = { seamColor: "#FF8800", prefs: { theme: "claw", themeMode: "dark" } };
+    const result = validateConfigObject({ ui });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.config.ui).toEqual(ui);
+    }
+  });
+
   it.each([
     { value: "true" },
     { value: 1 },
