@@ -1,4 +1,6 @@
+import type { OverlayHandle } from "@earendil-works/pi-tui";
 import { describe, expect, it, vi } from "vitest";
+import { createBtwPresenter } from "./tui-btw-overlay.js";
 import {
   createBaseState,
   createTestSessionActions,
@@ -7,7 +9,15 @@ import {
 
 describe("tui session actions btw", () => {
   it("keeps an open btw answer through a same-session history reload", async () => {
-    const btw = { clear: vi.fn() };
+    const closeOverlay = vi.fn();
+    const btw = createBtwPresenter({
+      screenReader: true,
+      chatLog: { showBtw: vi.fn(), dismissBtw: vi.fn(), addSystem: vi.fn() },
+      tui: { requestRender: vi.fn() },
+      openOverlay: vi.fn(() => ({ hide: vi.fn() }) as unknown as OverlayHandle),
+      closeOverlay,
+    });
+    btw.showResult({ question: "q", text: "answer" });
     const { loadHistory } = createTestSessionActions({
       btw,
       client: makeTuiBackend({
@@ -18,6 +28,8 @@ describe("tui session actions btw", () => {
 
     await loadHistory();
 
-    expect(btw.clear).not.toHaveBeenCalled();
+    expect(closeOverlay).not.toHaveBeenCalled();
+    btw.clear();
+    expect(closeOverlay).toHaveBeenCalledTimes(1);
   });
 });

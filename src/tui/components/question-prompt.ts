@@ -359,13 +359,19 @@ export class QuestionPrompt implements Component, Focusable {
       }
     }
     appendText(lines.join("\n"));
+    let cursorRow = -1;
     for (const [index, row] of this.rows().entries()) {
       const selected = !this.editing && index === this.selectedRow;
+      if (selected) {
+        cursorRow = rendered.length;
+      }
       const checked = row.kind === "option" && this.selections.get(this.step)?.has(row.index);
       const marker =
         row.kind === "option" && question.multiSelect ? `[${checked ? "x" : " "}] ` : "";
       appendText(
-        (selected ? theme.accent : theme.fg)(`${selected ? "›" : " "} ${marker}${row.label}`),
+        (selected ? theme.accent : theme.fg)(
+          `${selected && !this.screenReader ? "›" : " "} ${marker}${row.label}`,
+        ),
       );
       if (row.kind === "option") {
         const description = question.options[row.index]?.description;
@@ -394,6 +400,11 @@ export class QuestionPrompt implements Component, Focusable {
     }
     if (this.message) {
       appendText(theme.error(this.message));
+    }
+    // Screen reader mode parks the real cursor on the selected row; the "›" cue would be
+    // repainted on every arrow press.
+    if (this.screenReader && this.focused && cursorRow >= 0) {
+      rendered[cursorRow] = CURSOR_MARKER + rendered[cursorRow];
     }
     return rendered;
   }

@@ -1,5 +1,8 @@
 import type { Component, OverlayHandle, TUI } from "@earendil-works/pi-tui";
 import { BtwOverlay } from "./components/btw-overlay.js";
+import { FilterableSelectList } from "./components/filterable-select-list.js";
+import { QuestionPrompt } from "./components/question-prompt.js";
+import { SearchableSelectList } from "./components/searchable-select-list.js";
 import { SelectionCursor } from "./components/selection-cursor.js";
 
 type OverlayHost = Pick<TUI, "showOverlay" | "hasOverlay" | "setFocus" | "setShowHardwareCursor">;
@@ -29,10 +32,17 @@ export function createOverlayHandlers(
       return host.showOverlay(component, options);
     }
     screenReaderBell();
+    if (component instanceof SearchableSelectList || component instanceof FilterableSelectList) {
+      component.stableWindow = true;
+    }
     // A narrower overlay is spliced into chat rows, so a reader would also speak the earlier
     // messages sitting beside the options. Full-width rows replace them outright.
-    // The btw answer parks its own cursor; its text may start lines with an arrow.
-    const parked = component instanceof BtwOverlay ? component : new SelectionCursor(component);
+    // The btw answer and question prompt park their own cursor; their text may start lines with
+    // an arrow.
+    const parked =
+      component instanceof BtwOverlay || component instanceof QuestionPrompt
+        ? component
+        : new SelectionCursor(component);
     return host.showOverlay(parked, {
       ...options,
       width: "100%",

@@ -57,7 +57,7 @@ type EventHandlerContext = Omit<
   applySessionEventRow?: (row: TuiSessionRow) => boolean;
   noteLocalRunId?: (runId: string) => void;
   isLocalBtwRunId?: (runId: string) => boolean;
-  forgetLocalBtwRunId?: (runId: string) => void;
+  forgetLocalBtwRunId?: (runId: string, outcome?: "empty") => void;
 };
 
 export function createEventHandlers(context: EventHandlerContext) {
@@ -266,7 +266,7 @@ export function createEventHandlers(context: EventHandlerContext) {
       const status = terminalStopReason === "error" ? "error" : "idle";
       const runOutcome = status === "error" ? undefined : "completed";
       if (!evt.message && isLocalBtwRun) {
-        forgetLocalBtwRunId?.(evt.runId);
+        forgetLocalBtwRunId?.(evt.runId, "empty");
         runCoordinator.noteFinalizedRun(evt.runId);
         clearStaleStreamingIfNoTrackedRunRemains();
         tui.requestRender(true);

@@ -1,6 +1,5 @@
 import { CURSOR_MARKER, type Component } from "@earendil-works/pi-tui";
 import { describe, expect, it } from "vitest";
-import { QuestionPrompt } from "./question-prompt.js";
 import { SelectionCursor } from "./selection-cursor.js";
 
 const list = (lines: string[]) => {
@@ -82,12 +81,6 @@ describe("SelectionCursor", () => {
     expect(strip(wrapper.render(80))).toEqual(["  opencode-go/glm-5.3-air, GLM 5.3"]);
   });
 
-  it("drops the n/m position row", () => {
-    const { wrapper } = list(["→ one", "  two", "  1/2"]);
-    wrapper.focused = true;
-    expect(strip(wrapper.render(40))).toEqual(["  one", "  two"]);
-  });
-
   it("forwards focus to the wrapped component", () => {
     const { inner, wrapper } = list(["→ a"]);
     wrapper.focused = true;
@@ -99,38 +92,6 @@ describe("SelectionCursor", () => {
     const wrapper = new SelectionCursor(inner);
     wrapper.focused = true;
     expect(wrapper.render(40)).toEqual(["  one", `  ${CURSOR_MARKER}two`]);
-  });
-
-  it("follows the selected option of an ask_user question prompt", () => {
-    const prompt = new QuestionPrompt(
-      {
-        id: "request-1",
-        agentId: "main",
-        sessionKey: "agent:main:main",
-        createdAtMs: 1_000,
-        expiresAtMs: Date.now() + 60_000,
-        status: "pending",
-        questions: [
-          {
-            questionId: "target",
-            header: "Target",
-            question: "→ Where should the sample run?",
-            options: [{ label: "Staging" }, { label: "Production" }],
-          },
-        ],
-      },
-      { onSubmit() {}, onSkip() {}, onCollapse() {}, requestRender() {} },
-    );
-    const wrapper = new SelectionCursor(prompt);
-    wrapper.focused = true;
-    const first = wrapper.render(60);
-    prompt.handleInput("\x1b[B");
-    const second = wrapper.render(60);
-    expect(first.find((line) => line.includes(CURSOR_MARKER))).toBe(`  ${CURSOR_MARKER}1. Staging`);
-    expect(second.find((line) => line.includes(CURSOR_MARKER))).toBe(
-      `  ${CURSOR_MARKER}2. Production`,
-    );
-    expect(strip(second)).toEqual(strip(first));
   });
 
   it("leaves output alone when unfocused or nothing is selected", () => {

@@ -29,6 +29,33 @@ describe("BtwOverlay", () => {
     ]);
   });
 
+  it("windows an answer taller than the terminal and scrolls with the arrow and page keys", () => {
+    const answer = Array.from({ length: 40 }, (_, i) => `line ${i + 1}`).join("\n");
+    const requestRender = vi.fn();
+    const overlay = new BtwOverlay(
+      { question: "long?", text: answer },
+      { close: vi.fn(), copy: vi.fn(), requestRender, rows: () => 12 },
+    );
+    overlay.focused = true;
+    const first = text(overlay);
+    expect(first.length).toBeLessThanOrEqual(12);
+    expect(first[0]).toBe("Your btw answer: line 1");
+    expect(first).toContain("Question: long?");
+    overlay.handleInput("\x1b[B");
+    expect(text(overlay)[0]).toBe("line 2");
+    overlay.handleInput("\x1b[6~");
+    expect(text(overlay).some((line) => line.startsWith("Lines "))).toBe(true);
+    for (let i = 0; i < 10; i++) {
+      overlay.handleInput("\x1b[6~");
+    }
+    const last = text(overlay);
+    expect(last).toContain("line 40");
+    expect(last).toContain("Question: long?");
+    overlay.handleInput("\x1b[5~");
+    expect(text(overlay)).not.toContain("line 40");
+    expect(requestRender).toHaveBeenCalled();
+  });
+
   it("labels an error answer", () => {
     const { overlay } = make(undefined, true);
     expect(cursorRow(overlay)).toBe("btw error: It is 4.");

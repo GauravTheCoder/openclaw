@@ -29,6 +29,8 @@ export class FilterableSelectList extends SelectListInput implements Component, 
   private visibleEntries: Array<{ item: FilterableSelectItem; searchText: string }>;
   private selectedIndex = 0;
   private windowStart?: number;
+  /** Screen reader mode: the window moves only when the selection leaves it. */
+  stableWindow = false;
   private allItems: Array<{ item: FilterableSelectItem; searchText: string }>;
 
   onSelect?: (item: SelectItem) => void;
@@ -76,14 +78,24 @@ export class FilterableSelectList extends SelectListInput implements Component, 
   render(width: number): string[] {
     const safeWidth = Math.max(0, width);
     const total = this.visibleEntries.length;
-    const start = stableWindowStart(this.windowStart, this.selectedIndex, total, this.maxVisible);
-    this.windowStart = start;
-    const rows = this.visibleEntries.slice(start, start + this.maxVisible).map((e) => e.item);
-    // pi-tui's own window re-centers on every arrow press, so it only ever sees this slice.
-    const list = new SelectList(rows, Math.max(1, rows.length), this.theme);
+    let list: SelectList;
+    let start = 0;
+    if (this.stableWindow) {
+      start = stableWindowStart(this.windowStart, this.selectedIndex, total, this.maxVisible);
+      this.windowStart = start;
+      const rows = this.visibleEntries.slice(start, start + this.maxVisible).map((e) => e.item);
+      // pi-tui's own window re-centers on every arrow press, so it only ever sees this slice.
+      list = new SelectList(rows, Math.max(1, rows.length), this.theme);
+    } else {
+      list = new SelectList(
+        this.visibleEntries.map((e) => e.item),
+        this.maxVisible,
+        this.theme,
+      );
+    }
     list.setSelectedIndex(this.selectedIndex - start);
     const lines = list.render(safeWidth);
-    if (total > this.maxVisible) {
+    if (this.stableWindow && total > this.maxVisible) {
       const counter = `  (${String(this.selectedIndex + 1)}/${String(total)})`;
       lines.push(this.theme.scrollInfo(truncateToWidth(counter, safeWidth - 2, "")));
     }

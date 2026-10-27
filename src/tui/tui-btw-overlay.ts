@@ -75,12 +75,14 @@ export function createBtwPresenter(deps: {
     }, deps.timeoutMs ?? BTW_ANSWER_TIMEOUT_MS);
     waiting.unref?.();
   };
-  const forgetRunId = (runId: string) => {
+  const forgetRunId = (runId: string, outcome?: "empty") => {
     runIds.forget(runId);
-    liveRunIds.delete(runId);
-    // Failures announce themselves; the timer is only for a run that never reports back. The
-    // check waits a tick because a provisional id is forgotten just before the accepted one is
-    // noted.
+    if (liveRunIds.delete(runId) && outcome === "empty") {
+      deps.chatLog.addSystem("btw ended without an answer.");
+    }
+    // Failures and empty finishes announce themselves; the timer is only for a run that never
+    // reports back. The check waits a tick because a provisional id is forgotten just before the
+    // accepted one is noted.
     queueMicrotask(() => {
       if (liveRunIds.size === 0) {
         stopWaiting();

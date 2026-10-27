@@ -107,15 +107,40 @@ describe("FilterableSelectList", () => {
     const down = (list: FilterableSelectList, count: number) =>
       Array.from({ length: count }, () => list.handleInput("\u001b[B"));
 
-    it("keeps visible rows still while the selection moves inside the window", () => {
+    const createStableList = () => {
       const list = createList(many, 5);
+      list.stableWindow = true;
+      return list;
+    };
+
+    it("keeps the centered window outside screen reader mode", () => {
+      const list = createList(many, 5);
+      expect(rows(list)).toEqual([
+        "session-00",
+        "session-01",
+        "session-02",
+        "session-03",
+        "session-04",
+      ]);
+      down(list, 3);
+      expect(rows(list)).toEqual([
+        "session-01",
+        "session-02",
+        "session-03",
+        "session-04",
+        "session-05",
+      ]);
+    });
+
+    it("keeps visible rows still while the selection moves inside the window", () => {
+      const list = createStableList();
       const first = rows(list);
       down(list, 4);
       expect(rows(list)).toEqual(first);
     });
 
     it("scrolls by one row only when the selection leaves the window", () => {
-      const list = createList(many, 5);
+      const list = createStableList();
       rows(list);
       down(list, 5);
       expect(rows(list)).toEqual([

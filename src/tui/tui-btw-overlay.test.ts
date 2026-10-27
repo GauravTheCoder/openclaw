@@ -70,6 +70,18 @@ describe("createBtwPresenter", () => {
       expect(chatLog.addSystem).toHaveBeenCalledTimes(1);
     });
 
+    it("announces a run that finishes without an answer, once", async () => {
+      const { presenter, chatLog } = setup();
+      presenter.noteRunId("r1");
+      presenter.forgetRunId("r1", "empty");
+      presenter.forgetRunId("r1", "empty");
+      await Promise.resolve();
+      expect(chatLog.addSystem.mock.calls.map(([text]) => text)).toEqual([
+        "Asking side question",
+        "btw ended without an answer.",
+      ]);
+    });
+
     it("keeps waiting through a provisional-to-accepted id swap, then stops once the last run ends", async () => {
       vi.useFakeTimers();
       try {

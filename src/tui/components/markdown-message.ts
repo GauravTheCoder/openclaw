@@ -1,5 +1,6 @@
 import { Container, Spacer, Text } from "@earendil-works/pi-tui";
 import { markdownTheme, tuiTheme as theme } from "../theme/theme.js";
+import { sanitizeTerminalControlsAndBinary } from "../tui-formatters.js";
 import type { TuiImageSource } from "../tui-images.js";
 import { HyperlinkMarkdown } from "./hyperlink-markdown.js";
 import { MessageImages, type TuiImageRenderer } from "./message-images.js";
@@ -56,7 +57,7 @@ export class MarkdownMessageComponent extends Container {
       this.body.setText(text);
       return;
     }
-    this.raw = text;
+    this.raw = sanitizeTerminalControlsAndBinary(text);
     this.renderPlain();
   }
 

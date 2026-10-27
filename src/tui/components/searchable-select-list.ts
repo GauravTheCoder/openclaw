@@ -43,6 +43,8 @@ export class SearchableSelectList extends SelectListInput implements Component, 
   private filteredItems: SearchableSelectItem[];
   private selectedIndex = 0;
   private windowStart?: number;
+  /** Screen reader mode: the window moves only when the selection leaves it. */
+  stableWindow = false;
   private retainedSelection?: string;
   private highlightPatterns?: RegExp[];
   private emptyMessage = "No matches";
@@ -204,12 +206,20 @@ export class SearchableSelectList extends SelectListInput implements Component, 
       .toSorted((a, b) => b.length - a.length)
       .map((token) => new RegExp(escapeRegExp(token), "gi")));
 
-    const startIndex = stableWindowStart(
-      this.windowStart,
-      this.selectedIndex,
-      this.filteredItems.length,
-      this.maxVisible,
-    );
+    const startIndex = this.stableWindow
+      ? stableWindowStart(
+          this.windowStart,
+          this.selectedIndex,
+          this.filteredItems.length,
+          this.maxVisible,
+        )
+      : Math.max(
+          0,
+          Math.min(
+            this.selectedIndex - Math.floor(this.maxVisible / 2),
+            this.filteredItems.length - this.maxVisible,
+          ),
+        );
     this.windowStart = startIndex;
     const endIndex = Math.min(startIndex + this.maxVisible, this.filteredItems.length);
 
