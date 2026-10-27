@@ -1,6 +1,7 @@
 import { CURSOR_MARKER, type Component, type Focusable } from "@earendil-works/pi-tui";
 
-const SELECTED_ROW = /^(\s*)→ /u;
+// Pickers mark the selection with "→", ask_user question prompts with "›".
+const SELECTED_ROW = /^(\s*)[→›] /u;
 // Position counters ("1/9", "(1/9)") and ruled dividers are decoration that a reader would
 // announce again on every repaint.
 const DECORATION_ROW = /^ {2}\(?\d+\/\d+\)?\s*$|^\s*─+\s*$/u;
@@ -55,7 +56,8 @@ export class SelectionCursor implements Component, Focusable {
 
   render(width: number): string[] {
     const lines = this.inner.render(width);
-    const selected = this.focused ? lines.findIndex((line) => SELECTED_ROW.test(line)) : -1;
+    // Last match: prompt and approval text above the choices may itself start with an arrow.
+    const selected = this.focused ? lines.findLastIndex((line) => SELECTED_ROW.test(line)) : -1;
     if (selected < 0) {
       return lines;
     }
