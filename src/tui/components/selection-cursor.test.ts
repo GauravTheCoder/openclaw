@@ -64,6 +64,23 @@ describe("SelectionCursor", () => {
     ]);
   });
 
+  it("leaves prompt text with double spaces and a bare 3/4 line alone", () => {
+    const { wrapper } = list(["Pick one:  fast  or  slow", "3/4", "→ yes", "  no"]);
+    wrapper.focused = true;
+    expect(strip(wrapper.render(80))).toEqual([
+      "Pick one:  fast  or  slow",
+      "3/4",
+      "  yes",
+      "  no",
+    ]);
+  });
+
+  it("keeps a description that is not a restatement of the label", () => {
+    const { wrapper } = list(["→ opencode-go/glm-5.3-air          GLM 5.3"]);
+    wrapper.focused = true;
+    expect(strip(wrapper.render(80))).toEqual(["  opencode-go/glm-5.3-air, GLM 5.3"]);
+  });
+
   it("drops the n/m position row", () => {
     const { wrapper } = list(["→ one", "  two", "  1/2"]);
     wrapper.focused = true;

@@ -169,6 +169,27 @@ describe("FilterableSelectList", () => {
       ]);
     });
 
+    it("wraps from the first row to the last and back, as pi-tui's list does", () => {
+      const list = createList(many, 5);
+      rows(list);
+      list.handleInput("\u001b[A");
+      expect(selectByEnter(list)?.value).toBe("s-19");
+      list.handleInput("\u001b[B");
+      expect(selectByEnter(list)?.value).toBe("s-0");
+    });
+
+    it("ignores navigation when the filter matches nothing", () => {
+      const list = createList(many, 5);
+      typeInput(list, "zzzzzzzzzz");
+      list.handleInput("\u001b[B");
+      list.handleInput("\u001b[A");
+      const onSelect = vi.fn();
+      list.onSelect = onSelect;
+      list.handleInput("\r");
+      expect(onSelect).not.toHaveBeenCalled();
+      expect(() => list.render(80)).not.toThrow();
+    });
+
     it("selects the highlighted entry after scrolling and after filtering", () => {
       const list = createList(many, 5);
       rows(list);

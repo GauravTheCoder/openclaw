@@ -70,16 +70,52 @@ describe("createBtwPresenter", () => {
       expect(chatLog.addSystem).toHaveBeenCalledTimes(1);
     });
 
-    it("says so when the run ends without an answer, but not during an id swap", async () => {
-      const { presenter, chatLog } = setup();
-      presenter.noteRunId("provisional");
-      presenter.forgetRunId("provisional");
-      presenter.noteRunId("accepted");
-      await Promise.resolve();
-      expect(chatLog.addSystem).toHaveBeenCalledTimes(1);
-      presenter.forgetRunId("accepted");
-      await Promise.resolve();
-      expect(chatLog.addSystem).toHaveBeenLastCalledWith("btw ended without an answer.");
+    it("keeps waiting through a provisional-to-accepted id swap, then stops once the last run ends", async () => {
+      vi.useFakeTimers();
+      try {
+        const { presenter, chatLog } = setup();
+        presenter.noteRunId("provisional");
+        presenter.forgetRunId("provisional");
+        presenter.noteRunId("accepted");
+        await Promise.resolve();
+        vi.advanceTimersByTime(60_000);
+        expect(chatLog.addSystem).toHaveBeenCalledTimes(2);
+        expect(chatLog.addSystem).toHaveBeenLastCalledWith(
+          "btw failed: no answer received. Check the model, then try again.",
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("does not add a second failure line when the run already ended with its own error", async () => {
+      vi.useFakeTimers();
+      try {
+        const { presenter, chatLog } = setup();
+        presenter.noteRunId("r1");
+        presenter.forgetRunId("r1");
+        await Promise.resolve();
+        vi.advanceTimersByTime(120_000);
+        expect(chatLog.addSystem).toHaveBeenCalledExactlyOnceWith("Asking side question");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("drops all waiting state on a session switch so nothing announces into the new session", () => {
+      vi.useFakeTimers();
+      try {
+        const { presenter, chatLog } = setup();
+        presenter.noteRunId("r1");
+        presenter.clearRunIds();
+        vi.advanceTimersByTime(120_000);
+        expect(chatLog.addSystem).toHaveBeenCalledExactlyOnceWith("Asking side question");
+        presenter.noteRunId("r2");
+        expect(chatLog.addSystem).toHaveBeenLastCalledWith("Asking side question");
+        expect(chatLog.addSystem).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("reports a failure when no answer arrives in time", () => {

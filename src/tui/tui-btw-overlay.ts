@@ -78,15 +78,20 @@ export function createBtwPresenter(deps: {
   const forgetRunId = (runId: string) => {
     runIds.forget(runId);
     liveRunIds.delete(runId);
-    // A run that ends before any answer was shown would otherwise stay silent. The check waits
-    // a tick because a provisional id is forgotten just before the accepted one is noted.
+    // Failures announce themselves; the timer is only for a run that never reports back. The
+    // check waits a tick because a provisional id is forgotten just before the accepted one is
+    // noted.
     queueMicrotask(() => {
-      if (waiting && liveRunIds.size === 0) {
+      if (liveRunIds.size === 0) {
         stopWaiting();
-        deps.chatLog.addSystem("btw ended without an answer.");
-        deps.tui.requestRender();
       }
     });
   };
-  return { showResult, clear, noteRunId, forgetRunId, ...tracking };
+  // A session switch drops every tracked run, so nothing may announce into the new session.
+  const clearRunIds = () => {
+    runIds.clear();
+    liveRunIds.clear();
+    stopWaiting();
+  };
+  return { showResult, clear, noteRunId, forgetRunId, isRunId: runIds.has, clearRunIds };
 }

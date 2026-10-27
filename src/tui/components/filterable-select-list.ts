@@ -63,6 +63,12 @@ export class FilterableSelectList extends SelectListInput implements Component, 
     this.visibleEntries = this.allItems;
   }
 
+  // pi-tui's SelectList wraps at both ends; keep that.
+  private wrapIndex(index: number) {
+    const count = this.visibleEntries.length;
+    return count === 0 ? 0 : (index + count) % count;
+  }
+
   private selectedEntry() {
     return this.visibleEntries[this.selectedIndex]?.item ?? null;
   }
@@ -91,12 +97,12 @@ export class FilterableSelectList extends SelectListInput implements Component, 
   handleInput(keyData: string): void {
     // Printable keys must reach the filter; arrows and Ctrl keys own navigation.
     if (matchesKey(keyData, "up") || matchesKey(keyData, "ctrl+p")) {
-      this.selectedIndex = Math.max(0, this.selectedIndex - 1);
+      this.selectedIndex = this.wrapIndex(this.selectedIndex - 1);
       return;
     }
 
     if (matchesKey(keyData, "down") || matchesKey(keyData, "ctrl+n")) {
-      this.selectedIndex = Math.min(this.visibleEntries.length - 1, this.selectedIndex + 1);
+      this.selectedIndex = this.wrapIndex(this.selectedIndex + 1);
       return;
     }
 

@@ -3,7 +3,9 @@ import { CURSOR_MARKER, type Component, type Focusable } from "@earendil-works/p
 const SELECTED_ROW = /^(\s*)→ /u;
 // Position counters ("1/9", "(1/9)") and ruled dividers are decoration that a reader would
 // announce again on every repaint.
-const DECORATION_ROW = /^\s*(?:\(?\d+\/\d+\)?|─+)\s*$/u;
+const DECORATION_ROW = /^ {2}\(?\d+\/\d+\)?\s*$|^\s*─+\s*$/u;
+// Column-aligned list rows start with the two-column cue slot; prompt text does not.
+const LIST_ROW = /^ {2}\S/u;
 
 const comparable = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/gu, "");
 
@@ -11,11 +13,14 @@ const comparable = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/gu, 
 // and a description that restates the label ("opencode-go/deepseek-v4.1-flash  DeepSeek V4.1
 // Flash") as the same name twice. Join the distinct parts with a comma instead.
 function tidyColumns(row: string): string {
+  if (!LIST_ROW.test(row)) {
+    return row;
+  }
   const indent = /^\s*/u.exec(row)?.[0] ?? "";
   const kept: string[] = [];
   for (const part of row.slice(indent.length).split(/ {2,}/u)) {
     const key = comparable(part);
-    if (part && !(key.length >= 4 && kept.some((earlier) => comparable(earlier).includes(key)))) {
+    if (part && !(key.length >= 4 && kept.some((earlier) => comparable(earlier).endsWith(key)))) {
       kept.push(part);
     }
   }
