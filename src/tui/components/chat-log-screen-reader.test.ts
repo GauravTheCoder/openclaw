@@ -34,15 +34,18 @@ describe("ChatLog screen reader mode", () => {
     expect(done.join("\n")).toContain("three");
   });
 
-  it("surfaces a long paragraph sentence by sentence without repainting earlier rows", () => {
+  it("streams a long paragraph up to its last finished sentence", () => {
     const log = new ChatLog(50, undefined, true);
     log.updateAssistant("First one. Second one. Third", "r1");
-    const early = lines(log);
-    expect(early).toEqual(["Assistant: First one.", "Second one."]);
-    log.updateAssistant("First one. Second one. Third one. Fourth", "r1");
-    expect(lines(log).slice(0, early.length)).toEqual(early);
+    expect(lines(log)).toEqual(["Assistant: First one. Second one."]);
     log.finalizeAssistant("First one. Second one. Third one. Fourth", "r1");
-    expect(lines(log)).toEqual(["Assistant: First one.", "Second one.", "Third one.", "Fourth"]);
+    expect(lines(log)).toEqual(["Assistant: First one. Second one. Third one. Fourth"]);
+  });
+
+  it("shows literal text unchanged", () => {
+    const log = new ChatLog(50, undefined, true);
+    log.finalizeAssistant('print("Hello! world")', "r1");
+    expect(lines(log)).toEqual(['Assistant: print("Hello! world")']);
   });
 
   it("keeps numbered list items and abbreviations on one line", () => {
@@ -56,7 +59,7 @@ describe("ChatLog screen reader mode", () => {
     log.updateAssistant("Done. Half a sen", "r1");
     expect(lines(log)).toEqual(["Assistant: Done."]);
     log.finishAssistant("r1");
-    expect(lines(log)).toEqual(["Assistant: Done.", "Half a sen"]);
+    expect(lines(log)).toEqual(["Assistant: Done. Half a sen"]);
   });
 
   it("flushes the partial line when a tool starts", () => {

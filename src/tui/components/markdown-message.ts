@@ -6,10 +6,12 @@ import { HyperlinkMarkdown } from "./hyperlink-markdown.js";
 import { MessageImages, type TuiImageRenderer } from "./message-images.js";
 
 const PLAIN_LABELS = { user: "You:", assistant: "Assistant:" } as const;
+// A line break, or a sentence end followed by more text; "1." and "e.g." are not sentence ends.
+const SENTENCE_END = /(?<!\b\d+|\b\p{L})[.!?](?=[ \t]+\S)|\n/gu;
 
 /**
- * Screen reader rendering: unstyled labeled text. While streaming, only completed lines show,
- * so earlier rows are never repainted; finish() reveals the trailing partial line.
+ * Screen reader rendering: unstyled labeled text. While streaming, only completed lines and
+ * sentences show, so a reader hears whole sentences; finish() reveals the trailing partial one.
  */
 export type PlainMessageOptions = { streaming: boolean };
 
@@ -70,10 +72,11 @@ export class MarkdownMessageComponent extends Container {
   }
 
   private renderPlain() {
-    // Sentence ends become line breaks (streaming and final alike) so a long paragraph surfaces
-    // sentence by sentence while earlier rows stay unchanged.
-    const text = this.raw.replace(/(?<!\b\d+|\b\p{L})([.!?])[ \t]+(?=\S)/gu, "$1\n");
-    const visible = this.streaming ? text.slice(0, text.lastIndexOf("\n") + 1) : text;
+    // The text itself is never rewritten: code and quoted strings must read as sent.
+    const end = this.streaming
+      ? Math.max(0, ...Array.from(this.raw.matchAll(SENTENCE_END), (match) => match.index + 1))
+      : this.raw.length;
+    const visible = this.raw.slice(0, end);
     const trimmed = visible.trim();
     this.body.setText(trimmed ? `${PLAIN_LABELS[this.role]} ${trimmed}` : "");
   }
