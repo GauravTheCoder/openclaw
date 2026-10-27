@@ -130,4 +130,52 @@ describe("FilterableSelectList", () => {
     typeInput(list, "filter-title");
     expect(selectByEnter(list)).toMatchObject({ searchText: "raw-filter-target", value: rawValue });
   });
+
+  describe("scroll window", () => {
+    const many: FilterableSelectItem[] = Array.from({ length: 20 }, (_, i) => ({
+      value: `s-${i}`,
+      label: `session-${String(i).padStart(2, "0")}`,
+    }));
+    const rows = (list: FilterableSelectList) =>
+      list
+        .render(80)
+        .map((row) =>
+          stripAnsi(row)
+            .replace(/[*]/gu, "")
+            .replace(/^[[]?[→ ]+[\]]?/u, "")
+            .trim(),
+        )
+        .filter((row) => row.startsWith("session-"));
+    const down = (list: FilterableSelectList, count: number) =>
+      Array.from({ length: count }, () => list.handleInput("\u001b[B"));
+
+    it("keeps visible rows still while the selection moves inside the window", () => {
+      const list = createList(many, 5);
+      const first = rows(list);
+      down(list, 4);
+      expect(rows(list)).toEqual(first);
+    });
+
+    it("scrolls by one row only when the selection leaves the window", () => {
+      const list = createList(many, 5);
+      rows(list);
+      down(list, 5);
+      expect(rows(list)).toEqual([
+        "session-01",
+        "session-02",
+        "session-03",
+        "session-04",
+        "session-05",
+      ]);
+    });
+
+    it("selects the highlighted entry after scrolling and after filtering", () => {
+      const list = createList(many, 5);
+      rows(list);
+      down(list, 7);
+      expect(selectByEnter(list)?.value).toBe("s-7");
+      typeInput(list, "session-15");
+      expect(selectByEnter(list)?.value).toBe("s-15");
+    });
+  });
 });

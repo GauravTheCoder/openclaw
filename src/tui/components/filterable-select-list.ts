@@ -10,6 +10,7 @@ import {
 } from "@earendil-works/pi-tui";
 import chalk from "chalk";
 import { sanitizeRenderableLine } from "../tui-formatters.js";
+import { stableWindowStart } from "./list-window.js";
 import { SelectListInput } from "./select-list-input.js";
 
 export interface FilterableSelectItem extends SelectItem {
@@ -25,7 +26,9 @@ interface FilterableSelectListTheme extends SelectListTheme {
  * User types to filter, arrows or Ctrl+P/Ctrl+N navigate, and Escape clears or cancels.
  */
 export class FilterableSelectList extends SelectListInput implements Component, Focusable {
-  private selectList: SelectList;
+  private visibleEntries: Array<{ item: FilterableSelectItem; searchText: string }>;
+  private selectedIndex = 0;
+  private windowStart?: number;
   private allItems: Array<{ item: FilterableSelectItem; searchText: string }>;
 
   onSelect?: (item: SelectItem) => void;
@@ -57,45 +60,48 @@ export class FilterableSelectList extends SelectListInput implements Component, 
         this.onCancel?.();
       }
     };
-    this.selectList = this.createSelectList(this.allItems);
+    this.visibleEntries = this.allItems;
   }
 
-  private createSelectList(items: typeof this.allItems): SelectList {
-    return new SelectList(
-      items.map((entry) => entry.item),
-      this.maxVisible,
-      this.theme,
-    );
-  }
-
-  override invalidate(): void {
-    super.invalidate();
-    this.selectList.invalidate();
+  private selectedEntry() {
+    return this.visibleEntries[this.selectedIndex]?.item ?? null;
   }
 
   render(width: number): string[] {
     const safeWidth = Math.max(0, width);
+    const total = this.visibleEntries.length;
+    const start = stableWindowStart(this.windowStart, this.selectedIndex, total, this.maxVisible);
+    this.windowStart = start;
+    const rows = this.visibleEntries.slice(start, start + this.maxVisible).map((e) => e.item);
+    // pi-tui's own window re-centers on every arrow press, so it only ever sees this slice.
+    const list = new SelectList(rows, Math.max(1, rows.length), this.theme);
+    list.setSelectedIndex(this.selectedIndex - start);
+    const lines = list.render(safeWidth);
+    if (total > this.maxVisible) {
+      const counter = `  (${String(this.selectedIndex + 1)}/${String(total)})`;
+      lines.push(this.theme.scrollInfo(truncateToWidth(counter, safeWidth - 2, "")));
+    }
     return [
       this.renderInput(safeWidth, this.theme.filterLabel("Filter: ")),
       chalk.dim("─".repeat(safeWidth)),
-      ...this.selectList.render(safeWidth).map((line) => truncateToWidth(line, safeWidth, "")),
+      ...lines.map((line) => truncateToWidth(line, safeWidth, "")),
     ];
   }
 
   handleInput(keyData: string): void {
     // Printable keys must reach the filter; arrows and Ctrl keys own navigation.
     if (matchesKey(keyData, "up") || matchesKey(keyData, "ctrl+p")) {
-      this.selectList.handleInput("\x1b[A");
+      this.selectedIndex = Math.max(0, this.selectedIndex - 1);
       return;
     }
 
     if (matchesKey(keyData, "down") || matchesKey(keyData, "ctrl+n")) {
-      this.selectList.handleInput("\x1b[B");
+      this.selectedIndex = Math.min(this.visibleEntries.length - 1, this.selectedIndex + 1);
       return;
     }
 
     if (matchesKey(keyData, "enter")) {
-      const selected = this.selectList.getSelectedItem();
+      const selected = this.selectedEntry();
       if (selected) {
         this.onSelect?.(selected);
       }
@@ -103,9 +109,13 @@ export class FilterableSelectList extends SelectListInput implements Component, 
     }
 
     if (this.updateInput(keyData)) {
-      this.selectList = this.createSelectList(
-        fuzzyFilter(this.allItems, this.input.getValue(), (entry) => entry.searchText),
+      this.visibleEntries = fuzzyFilter(
+        this.allItems,
+        this.input.getValue(),
+        (entry) => entry.searchText,
       );
+      this.selectedIndex = 0;
+      this.windowStart = undefined;
     }
   }
 }

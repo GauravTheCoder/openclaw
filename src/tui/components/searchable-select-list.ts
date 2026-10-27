@@ -15,6 +15,7 @@ import { iterateAnsiSegments } from "../../../packages/terminal-core/src/ansi-se
 import { stripAnsi } from "../../../packages/terminal-core/src/ansi.js";
 import { escapeRegExp } from "../../shared/regexp.js";
 import { sanitizeRenderableLine } from "../tui-formatters.js";
+import { stableWindowStart } from "./list-window.js";
 import { SelectListInput } from "./select-list-input.js";
 
 export interface SearchableSelectListTheme extends SelectListTheme {
@@ -203,17 +204,12 @@ export class SearchableSelectList extends SelectListInput implements Component, 
       .toSorted((a, b) => b.length - a.length)
       .map((token) => new RegExp(escapeRegExp(token), "gi")));
 
-    // The first render centers the selection; after that the window only moves when the
-    // selection leaves it, so arrowing repaints one row pair instead of every visible row.
-    const maxStart = Math.max(0, this.filteredItems.length - this.maxVisible);
-    let start =
-      this.windowStart ?? Math.max(0, this.selectedIndex - Math.floor(this.maxVisible / 2));
-    if (this.selectedIndex < start) {
-      start = this.selectedIndex;
-    } else if (this.selectedIndex >= start + this.maxVisible) {
-      start = this.selectedIndex - this.maxVisible + 1;
-    }
-    const startIndex = Math.min(start, maxStart);
+    const startIndex = stableWindowStart(
+      this.windowStart,
+      this.selectedIndex,
+      this.filteredItems.length,
+      this.maxVisible,
+    );
     this.windowStart = startIndex;
     const endIndex = Math.min(startIndex + this.maxVisible, this.filteredItems.length);
 

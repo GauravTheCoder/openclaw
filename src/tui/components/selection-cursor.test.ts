@@ -34,6 +34,12 @@ describe("SelectionCursor", () => {
     expect(second[1]).toContain(CURSOR_MARKER);
   });
 
+  it("drops the ruled divider and the (n/m) counter used by the session picker", () => {
+    const { wrapper } = list(["Filter: ", "──────", "→ one", "  two", "  (1/9)"]);
+    wrapper.focused = true;
+    expect(strip(wrapper.render(40))).toEqual(["Filter: ", "  one", "  two"]);
+  });
+
   it("drops the n/m position row", () => {
     const { wrapper } = list(["→ one", "  two", "  1/2"]);
     wrapper.focused = true;

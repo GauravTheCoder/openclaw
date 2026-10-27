@@ -1,8 +1,9 @@
 import { CURSOR_MARKER, type Component, type Focusable } from "@earendil-works/pi-tui";
 
 const SELECTED_ROW = /^(\s*)→ /u;
-// "n/m" position rows repaint on every arrow press and would be announced again.
-const COUNTER_ROW = /^\s*\d+\/\d+\s*$/u;
+// Position counters ("1/9", "(1/9)") and ruled dividers are decoration that a reader would
+// announce again on every repaint.
+const DECORATION_ROW = /^\s*(?:\(?\d+\/\d+\)?|─+)\s*$/u;
 
 /** Screen reader mode: parks the real cursor on the selected row so readers follow selection. */
 export class SelectionCursor implements Component, Focusable {
@@ -44,7 +45,7 @@ export class SelectionCursor implements Component, Focusable {
         const row = line.split(CURSOR_MARKER).join("").replace(SELECTED_ROW, "$1  ");
         return index === selected ? row.replace(/^(\s*)/u, `$1${CURSOR_MARKER}`) : row;
       })
-      .filter((line) => !COUNTER_ROW.test(line));
+      .filter((line) => !DECORATION_ROW.test(line));
   }
 
   handleInput(data: string) {
