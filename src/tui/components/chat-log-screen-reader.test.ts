@@ -34,12 +34,23 @@ describe("ChatLog screen reader mode", () => {
     expect(done.join("\n")).toContain("three");
   });
 
-  it("streams a long paragraph up to its last finished sentence", () => {
+  it("holds the last wrapped row and never rewrites an announced one", () => {
     const log = new ChatLog(50, undefined, true);
-    log.updateAssistant("First one. Second one. Third", "r1");
-    expect(lines(log)).toEqual(["Assistant: First one. Second one."]);
-    log.finalizeAssistant("First one. Second one. Third one. Fourth", "r1");
-    expect(lines(log)).toEqual(["Assistant: First one. Second one. Third one. Fourth"]);
+    const first = "First sentence is here and it is rather long. Second one follows right away.";
+    log.updateAssistant(`${first} Third`, "r1");
+    const before = lines(log);
+    expect(before).toEqual([
+      "Assistant: First sentence is here and it is rather long. Second one follows",
+    ]);
+    log.updateAssistant(
+      `${first} Third one is also long enough to wrap onto another row, and then a fourth row begins here.`,
+      "r1",
+    );
+    const after = lines(log);
+    expect(after.slice(0, before.length)).toEqual(before);
+    expect(after.length).toBeGreaterThan(before.length);
+    log.finalizeAssistant(`${first} Third one ends.`, "r1");
+    expect(lines(log).join(" ")).toContain("Third one ends.");
   });
 
   it("shows literal text unchanged", () => {
@@ -57,7 +68,7 @@ describe("ChatLog screen reader mode", () => {
   it("reveals the held-back sentence when the run fails", () => {
     const log = new ChatLog(50, undefined, true);
     log.updateAssistant("Done. Half a sen", "r1");
-    expect(lines(log)).toEqual(["Assistant: Done."]);
+    expect(lines(log)).toEqual([]);
     log.finishAssistant("r1");
     expect(lines(log)).toEqual(["Assistant: Done. Half a sen"]);
   });

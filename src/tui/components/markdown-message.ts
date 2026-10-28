@@ -6,17 +6,24 @@ import { HyperlinkMarkdown } from "./hyperlink-markdown.js";
 import { MessageImages, type TuiImageRenderer } from "./message-images.js";
 
 const PLAIN_LABELS = { user: "You:", assistant: "Assistant:" } as const;
-// A line break, or a sentence end followed by more text; "1." and "e.g." are not sentence ends.
-const SENTENCE_END = /(?<!\b\d+|\b\p{L})[.!?](?=[ \t]+\S)|\n/gu;
 
 /**
- * Screen reader rendering: unstyled labeled text. While streaming, only completed lines and
- * sentences show, so a reader hears whole sentences; finish() reveals the trailing partial one.
+ * Screen reader rendering: unstyled labeled text. While streaming, only completed rows show: the
+ * last wrapped row is held back, so an announced row never changes. finish() reveals it.
  */
 export type PlainMessageOptions = { streaming: boolean };
 
+class StreamingText extends Text {
+  hold = false;
+
+  override render(width: number): string[] {
+    const rows = super.render(width);
+    return this.hold ? rows.slice(0, -1) : rows;
+  }
+}
+
 export class MarkdownMessageComponent extends Container {
-  private body: HyperlinkMarkdown | Text;
+  private body: HyperlinkMarkdown | StreamingText;
   private images: MessageImages;
   private raw = "";
   private streaming = false;
@@ -30,7 +37,7 @@ export class MarkdownMessageComponent extends Container {
     super();
     if (plain) {
       this.streaming = plain.streaming;
-      this.body = new Text("", 0, 0);
+      this.body = new StreamingText("", 0, 0);
       this.addChild(this.body);
       this.images = new MessageImages(imageRenderer);
       this.addChild(this.images);
@@ -73,12 +80,10 @@ export class MarkdownMessageComponent extends Container {
 
   private renderPlain() {
     // The text itself is never rewritten: code and quoted strings must read as sent.
-    const end = this.streaming
-      ? Math.max(0, ...Array.from(this.raw.matchAll(SENTENCE_END), (match) => match.index + 1))
-      : this.raw.length;
-    const visible = this.raw.slice(0, end);
-    const trimmed = visible.trim();
-    this.body.setText(trimmed ? `${PLAIN_LABELS[this.role]} ${trimmed}` : "");
+    const body = this.body as StreamingText;
+    body.hold = this.streaming;
+    const text = this.streaming ? this.raw.trimStart() : this.raw.trim();
+    body.setText(text.trim() ? `${PLAIN_LABELS[this.role]} ${text}` : "");
   }
 
   setImages(images: readonly TuiImageSource[]) {
