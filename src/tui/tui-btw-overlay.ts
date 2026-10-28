@@ -3,7 +3,7 @@ import { copyToClipboard } from "../infra/clipboard.js";
 import { BtwOverlay } from "./components/btw-overlay.js";
 import { createTuiRunIdTracker } from "./tui-session-run-coordinator.js";
 
-type BtwResult = { question: string; text: string; isError?: boolean };
+type BtwResult = { question: string; text: string; isError?: boolean; runId?: string };
 
 // Past this a reader hears nothing, so the wait is announced as a failure.
 const BTW_ANSWER_TIMEOUT_MS = 60_000;
@@ -50,9 +50,13 @@ export function createBtwPresenter(deps: {
       deps.tui.requestRender();
     }
   };
-  const showResult = (params: BtwResult) => {
+  const showResult = ({ runId, ...params }: BtwResult) => {
     stopWaiting();
     clear();
+    // The message-free final that follows a delivered answer must not read as "no answer".
+    if (runId) {
+      liveRunIds.delete(runId);
+    }
     const overlay = new BtwOverlay(params, {
       close: clear,
       copy: deps.copy ?? copyToClipboard,

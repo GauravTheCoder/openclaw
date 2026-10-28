@@ -82,6 +82,15 @@ describe("createBtwPresenter", () => {
       ]);
     });
 
+    it("stays silent when the message-free final follows a delivered answer", async () => {
+      const { presenter, chatLog } = setup();
+      presenter.noteRunId("r1");
+      presenter.showResult({ question: "a", text: "one", runId: "r1" });
+      presenter.forgetRunId("r1", "empty");
+      await Promise.resolve();
+      expect(chatLog.addSystem).toHaveBeenCalledExactlyOnceWith("Asking side question");
+    });
+
     it("keeps waiting through a provisional-to-accepted id swap, then stops once the last run ends", async () => {
       vi.useFakeTimers();
       try {

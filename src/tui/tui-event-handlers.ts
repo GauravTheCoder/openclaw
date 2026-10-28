@@ -49,7 +49,7 @@ type EventHandlerContext = Omit<
 > & {
   chatLog: ChatLogOperations;
   btw: {
-    showResult: (params: { question: string; text: string; isError?: boolean }) => void;
+    showResult: (params: Pick<BtwEvent, "question" | "text" | "isError" | "runId">) => void;
     clear: () => void;
   };
   updateFooter: () => void;
@@ -726,7 +726,7 @@ export function createEventHandlers(context: EventHandlerContext) {
     if (!question || !text) {
       return;
     }
-    btw.showResult({ question, text, isError: evt.isError });
+    btw.showResult({ question, text, isError: evt.isError, runId: evt.runId });
     tui.requestRender();
   });
 
