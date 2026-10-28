@@ -80,7 +80,10 @@ export class MarkdownMessageComponent extends Container {
 
   private renderPlain() {
     // The text itself is never rewritten: code and quoted strings must read as sent.
-    const body = this.body as StreamingText;
+    const body = this.body;
+    if (!(body instanceof StreamingText)) {
+      return;
+    }
     body.hold = this.streaming;
     const text = this.streaming ? this.raw.trimStart() : this.raw.trim();
     body.setText(text.trim() ? `${PLAIN_LABELS[this.role]} ${text}` : "");
