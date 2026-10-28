@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
-import { createA11yStatusReporter, resolveTuiA11y, setupTuiA11y } from "./tui-a11y.js";
+import {
+  createA11yStatusReporter,
+  noForcedRender,
+  resolveTuiA11y,
+  setupTuiA11y,
+} from "./tui-a11y.js";
 
 const configOn = { ui: { tui: { screenReader: true } } } as OpenClawConfig;
 const configOff = { ui: { tui: { screenReader: false } } } as OpenClawConfig;
@@ -88,5 +93,13 @@ describe("setupTuiA11y", () => {
       write.mockRestore();
       chalk.level = saved;
     }
+  });
+});
+
+describe("noForcedRender", () => {
+  it("drops the force flag so finished runs keep differential rendering", () => {
+    const tui = { requestRender: vi.fn() };
+    noForcedRender(tui).requestRender(true);
+    expect(tui.requestRender.mock.calls).toEqual([[]]);
   });
 });

@@ -46,7 +46,7 @@ import { getSlashCommands, shouldSubmitExactArgumentCompletion } from "./command
 import { ChatLog } from "./components/chat-log.js";
 import { CustomEditor } from "./components/custom-editor.js";
 import { editorTheme, tuiTheme as theme } from "./theme/theme.js";
-import { createA11yStatusReporter, setupTuiA11y, TUI_BELL } from "./tui-a11y.js";
+import { createA11yStatusReporter, noForcedRender, setupTuiA11y, TUI_BELL } from "./tui-a11y.js";
 import {
   createTuiProgramStatusReporter,
   isTuiBusyActivityStatus,
@@ -1179,7 +1179,7 @@ async function runTuiUnlocked(opts: RunTuiOptions): Promise<TuiResult> {
   } = createEventHandlers({
     chatLog,
     btw,
-    tui,
+    tui: a11y.screenReader ? noForcedRender(tui) : tui,
     state,
     localMode: isLocalMode,
     setActivityStatus,

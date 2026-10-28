@@ -85,3 +85,9 @@ export function setupTuiA11y(params: Parameters<typeof resolveTuiA11y>[0]) {
   }
   return a11y;
 }
+
+// A forced render reprints every row, so a reader re-reads the transcript when a run ends.
+// pi-tui still redraws fully on its own when the viewport needs it (resize, rows above it).
+export function noForcedRender(tui: { requestRender: (force?: boolean) => void }) {
+  return { requestRender: () => tui.requestRender() };
+}
