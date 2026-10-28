@@ -99,9 +99,7 @@ describe("setupTuiA11y", () => {
 describe("noForcedRender", () => {
   it("drops the force flag so finished runs keep differential rendering", () => {
     const tui = { requestRender: vi.fn() };
-    // Typed as createEventHandlers sees it, which passes the force flag.
-    const wrapped: { requestRender: (force?: boolean) => void } = noForcedRender(tui);
-    wrapped.requestRender(true);
+    noForcedRender(tui).requestRender(true);
     expect(tui.requestRender.mock.calls).toEqual([[]]);
   });
 });
