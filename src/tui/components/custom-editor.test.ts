@@ -1,4 +1,4 @@
-import { CombinedAutocompleteProvider, type TUI } from "@earendil-works/pi-tui";
+import { CombinedAutocompleteProvider, visibleWidth, type TUI } from "@earendil-works/pi-tui";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getSlashCommands, shouldSubmitExactArgumentCompletion } from "../commands.js";
 import { editorTheme } from "../theme/theme.js";
@@ -116,14 +116,16 @@ describe("CustomEditor in screen reader mode", () => {
     expect(lines.join("\n")).not.toContain("─");
   });
 
-  it("keeps the direction when a narrow terminal cuts off the hidden line count", () => {
+  it("wraps the hidden line notice to a narrow terminal and keeps the direction", () => {
     const editor = new CustomEditor(
       { requestRender: vi.fn(), terminal: { rows: 24 } } as unknown as TUI,
       editorTheme,
       true,
     );
     editor.setText(Array.from({ length: 10 }, (_, index) => `${index}`).join("\n"));
-    expect(editor.render(10)[0]).toBe("more lines above");
+    const lines = editor.render(10);
+    expect(lines.slice(0, 2)).toEqual(["more lines", "above"]);
+    expect(lines.every((line) => visibleWidth(line) <= 10)).toBe(true);
   });
 
   it("parks the cursor on the selected suggestion while autocomplete is open", async () => {

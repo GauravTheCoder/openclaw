@@ -5,6 +5,7 @@ import {
   isKeyRelease,
   Key,
   matchesKey,
+  wrapTextWithAnsi,
   type EditorTheme,
   type TUI,
 } from "@earendil-works/pi-tui";
@@ -86,7 +87,8 @@ export class CustomEditor extends Editor {
     }
     // Text and autocomplete rows start with the two padding columns, so a row starting with "─" is
     // a border. Scroll borders ("── ↑ 3 more ──") keep their count as plain words; at very
-    // narrow widths pi-tui cuts the count off, so only the direction is left.
+    // narrow widths pi-tui cuts the count off, so only the direction is left. The notice wraps
+    // because pi-tui stops on rows wider than the terminal.
     const rows = lines.flatMap((line) => {
       if (!line.startsWith("─")) {
         return [line];
@@ -97,9 +99,10 @@ export class CustomEditor extends Editor {
       }
       const [, direction, count] = hidden;
       const where = direction === "↑" ? "above" : "below";
-      return [
+      return wrapTextWithAnsi(
         count ? `${count} more line${count === "1" ? "" : "s"} ${where}` : `more lines ${where}`,
-      ];
+        width,
+      );
     });
     const first = rows.findIndex((line) => line.startsWith("  "));
     if (first >= 0) {
