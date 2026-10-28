@@ -43,7 +43,10 @@ export class SearchableSelectList extends SelectListInput implements Component, 
   private filteredItems: SearchableSelectItem[];
   private selectedIndex = 0;
   private windowStart?: number;
-  /** Screen reader mode: the window moves only when the selection leaves it. */
+  /**
+   * Screen reader mode: the window moves only when the selection leaves it, and the position
+   * counter is left out because a reader would announce it on every repaint.
+   */
   stableWindow = false;
   private retainedSelection?: string;
   private highlightPatterns?: RegExp[];
@@ -267,7 +270,7 @@ export class SearchableSelectList extends SelectListInput implements Component, 
       lines.push(truncateToWidth(isSelected ? this.theme.selectedText(line) : line, safeWidth, ""));
     }
 
-    if (this.filteredItems.length > this.maxVisible) {
+    if (!this.stableWindow && this.filteredItems.length > this.maxVisible) {
       const scrollInfo = `${this.selectedIndex + 1}/${this.filteredItems.length}`;
       lines.push(truncateToWidth(this.theme.scrollInfo(`  ${scrollInfo}`), safeWidth, ""));
     }

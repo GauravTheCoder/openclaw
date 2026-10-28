@@ -1,4 +1,5 @@
 import {
+  CURSOR_MARKER,
   Editor,
   getKeybindings,
   isKeyRelease,
@@ -83,10 +84,36 @@ export class CustomEditor extends Editor {
     if (!this.screenReader) {
       return lines;
     }
-    const rows = lines.filter((line) => !/^─+$/u.test(line));
-    const first = rows[0];
-    if (first?.startsWith("  ")) {
-      rows[0] = `$ ${first.slice(2)}`;
+    // Text and autocomplete rows start with the two padding columns, so a row starting with "─" is
+    // a border. Scroll borders ("── ↑ 3 more ──") keep their count as plain words; at very
+    // narrow widths pi-tui cuts the count off, so only the direction is left.
+    const rows = lines.flatMap((line) => {
+      if (!line.startsWith("─")) {
+        return [line];
+      }
+      const hidden = /([↑↓])(?: (\d+) more)?/u.exec(line);
+      if (!hidden) {
+        return [];
+      }
+      const [, direction, count] = hidden;
+      const where = direction === "↑" ? "above" : "below";
+      return [
+        count ? `${count} more line${count === "1" ? "" : "s"} ${where}` : `more lines ${where}`,
+      ];
+    });
+    const first = rows.findIndex((line) => line.startsWith("  "));
+    if (first >= 0) {
+      rows[first] = `$ ${rows[first]?.slice(2)}`;
+    }
+    // The autocomplete list renders last, its selection cue sits after the padding columns.
+    // Moving the cursor there lets a reader follow the selected suggestion.
+    const suggestion = this.isShowingAutocomplete()
+      ? rows.findLastIndex((line) => line.startsWith("  → "))
+      : -1;
+    if (suggestion > first) {
+      const plain = rows.map((line) => line.split(CURSOR_MARKER).join(""));
+      plain[suggestion] = `    ${CURSOR_MARKER}${plain[suggestion]?.slice(4)}`;
+      return plain;
     }
     return rows;
   }

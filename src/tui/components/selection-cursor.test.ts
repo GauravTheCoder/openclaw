@@ -1,5 +1,8 @@
 import { CURSOR_MARKER, type Component } from "@earendil-works/pi-tui";
 import { describe, expect, it } from "vitest";
+import { filterableSelectListTheme } from "../theme/theme.js";
+import { buildSessionChoices } from "../tui-session-picker.js";
+import { FilterableSelectList } from "./filterable-select-list.js";
 import { SelectionCursor } from "./selection-cursor.js";
 
 const list = (lines: string[]) => {
@@ -24,20 +27,47 @@ describe("SelectionCursor", () => {
   });
 
   it("changes only the cursor, not the row text, when the selection moves", () => {
-    const { inner, wrapper } = list(["→ one", "  two", "  1/2"]);
+    const { inner, wrapper } = list(["→ one", "  two"]);
     wrapper.focused = true;
     const first = wrapper.render(40);
-    inner.lines = ["  one", "→ two", "  2/2"];
+    inner.lines = ["  one", "→ two"];
     const second = wrapper.render(40);
     expect(strip(second)).toEqual(strip(first));
     expect(first[0]).toContain(CURSOR_MARKER);
     expect(second[1]).toContain(CURSOR_MARKER);
   });
 
-  it("drops the ruled divider and the (n/m) counter used by the session picker", () => {
-    const { wrapper } = list(["Filter: ", "──────", "→ one", "  two", "  (1/9)"]);
+  it("keeps label text that looks like an arrow, a counter or a divider", () => {
+    const { wrapper } = list(["→ step one", "  indented  detail", "───", "", "→ 1/2", "  3/4"]);
     wrapper.focused = true;
-    expect(strip(wrapper.render(40))).toEqual(["Filter: ", "  one", "  two"]);
+    expect(strip(wrapper.render(40))).toEqual([
+      "→ step one",
+      "  indented  detail",
+      "───",
+      "",
+      "  1/2",
+      "  3/4",
+    ]);
+  });
+
+  it("splits aligned rows at their shared column, not at a double space in a label", () => {
+    const { wrapper } = list(["→ hi  there   now", "  other       2d"]);
+    wrapper.focused = true;
+    expect(strip(wrapper.render(40))).toEqual(["  hi  there, now", "  other, 2d"]);
+  });
+
+  it("shows the session picker without its divider or position counter", () => {
+    const sessions = Array.from({ length: 12 }, (_, index) => ({ key: `agent:main:s${index}` }));
+    const picker = new FilterableSelectList(
+      buildSessionChoices(sessions),
+      9,
+      filterableSelectListTheme,
+    );
+    picker.stableWindow = true;
+    const wrapper = new SelectionCursor(picker);
+    wrapper.focused = true;
+    const rows = strip(wrapper.render(80)).map((row) => row.trimEnd());
+    expect(rows.slice(1)).toEqual(Array.from({ length: 9 }, (_, index) => `  s${index}`));
   });
 
   it("turns column padding into a comma so a row reads as one phrase", () => {
@@ -73,6 +103,23 @@ describe("SelectionCursor", () => {
     const { wrapper } = list(["→ opencode-go/glm-5.3-air          GLM 5.3"]);
     wrapper.focused = true;
     expect(strip(wrapper.render(80))).toEqual(["  opencode-go/glm-5.3-air, GLM 5.3"]);
+  });
+
+  it("keeps a session title arrow and parks the cursor on the selected session", () => {
+    const picker = new FilterableSelectList(
+      buildSessionChoices([
+        { key: "agent:main:main" },
+        { key: "agent:main:deploy", derivedTitle: "→ Deploy" },
+      ]),
+      9,
+      filterableSelectListTheme,
+    );
+    const wrapper = new SelectionCursor(picker);
+    wrapper.focused = true;
+    const rows = wrapper.render(80);
+    const selected = rows.findIndex((row) => row.includes(CURSOR_MARKER));
+    expect(strip(rows).map((row) => row.trimEnd())).toContain("  → Deploy (deploy)");
+    expect(strip([rows[selected] ?? ""])[0]?.trimEnd()).toBe("  main");
   });
 
   it("forwards focus to the wrapped component", () => {

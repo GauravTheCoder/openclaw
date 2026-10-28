@@ -29,7 +29,10 @@ export class FilterableSelectList extends SelectListInput implements Component, 
   private visibleEntries: Array<{ item: FilterableSelectItem; searchText: string }>;
   private selectedIndex = 0;
   private windowStart?: number;
-  /** Screen reader mode: the window moves only when the selection leaves it. */
+  /**
+   * Screen reader mode: the window moves only when the selection leaves it, and the divider and
+   * position counter are left out because a reader would announce them on every repaint.
+   */
   stableWindow = false;
   private allItems: Array<{ item: FilterableSelectItem; searchText: string }>;
 
@@ -95,13 +98,9 @@ export class FilterableSelectList extends SelectListInput implements Component, 
     }
     list.setSelectedIndex(this.selectedIndex - start);
     const lines = list.render(safeWidth);
-    if (this.stableWindow && total > this.maxVisible) {
-      const counter = `  (${String(this.selectedIndex + 1)}/${String(total)})`;
-      lines.push(this.theme.scrollInfo(truncateToWidth(counter, safeWidth - 2, "")));
-    }
     return [
       this.renderInput(safeWidth, this.theme.filterLabel("Filter: ")),
-      chalk.dim("─".repeat(safeWidth)),
+      ...(this.stableWindow ? [] : [chalk.dim("─".repeat(safeWidth))]),
       ...lines.map((line) => truncateToWidth(line, safeWidth, "")),
     ];
   }
